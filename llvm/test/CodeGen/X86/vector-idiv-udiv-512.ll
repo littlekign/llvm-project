@@ -440,22 +440,23 @@ define <32 x i16> @test_rem7_32i16(<32 x i16> %a) nounwind {
 ; AVX512F-LABEL: test_rem7_32i16:
 ; AVX512F:       # %bb.0:
 ; AVX512F-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512F-NEXT:    vmovdqa {{.*#+}} ymm2 = [9363,9363,9363,9363,9363,9363,9363,9363,9363,9363,9363,9363,9363,9363,9363,9363]
-; AVX512F-NEXT:    vpmulhuw %ymm2, %ymm1, %ymm3
-; AVX512F-NEXT:    vpsubw %ymm3, %ymm1, %ymm4
-; AVX512F-NEXT:    vpsrlw $1, %ymm4, %ymm4
-; AVX512F-NEXT:    vpaddw %ymm3, %ymm4, %ymm3
-; AVX512F-NEXT:    vpsrlw $2, %ymm3, %ymm3
-; AVX512F-NEXT:    vmovdqa {{.*#+}} ymm4 = [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
-; AVX512F-NEXT:    vpmullw %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vpsubw %ymm3, %ymm1, %ymm1
-; AVX512F-NEXT:    vpmulhuw %ymm2, %ymm0, %ymm2
-; AVX512F-NEXT:    vpsubw %ymm2, %ymm0, %ymm3
-; AVX512F-NEXT:    vpsrlw $1, %ymm3, %ymm3
-; AVX512F-NEXT:    vpaddw %ymm2, %ymm3, %ymm2
-; AVX512F-NEXT:    vpsrlw $2, %ymm2, %ymm2
-; AVX512F-NEXT:    vpmullw %ymm4, %ymm2, %ymm2
-; AVX512F-NEXT:    vpsubw %ymm2, %ymm0, %ymm0
+; AVX512F-NEXT:    vpmovzxwd {{.*#+}} zmm1 = ymm1[0],zero,ymm1[1],zero,ymm1[2],zero,ymm1[3],zero,ymm1[4],zero,ymm1[5],zero,ymm1[6],zero,ymm1[7],zero,ymm1[8],zero,ymm1[9],zero,ymm1[10],zero,ymm1[11],zero,ymm1[12],zero,ymm1[13],zero,ymm1[14],zero,ymm1[15],zero
+; AVX512F-NEXT:    vpbroadcastd {{.*#+}} zmm2 = [613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757]
+; AVX512F-NEXT:    vpmulld %zmm2, %zmm1, %zmm1
+; AVX512F-NEXT:    vpbroadcastd {{.*#+}} zmm3 = [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
+; AVX512F-NEXT:    vpmuludq %zmm3, %zmm1, %zmm4
+; AVX512F-NEXT:    vpshufd {{.*#+}} zmm1 = zmm1[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; AVX512F-NEXT:    vpmuludq %zmm3, %zmm1, %zmm1
+; AVX512F-NEXT:    vmovdqa64 {{.*#+}} zmm5 = [1,17,3,19,5,21,7,23,9,25,11,27,13,29,15,31]
+; AVX512F-NEXT:    vpermt2d %zmm1, %zmm5, %zmm4
+; AVX512F-NEXT:    vpmovdw %zmm4, %ymm1
+; AVX512F-NEXT:    vpmovzxwd {{.*#+}} zmm0 = ymm0[0],zero,ymm0[1],zero,ymm0[2],zero,ymm0[3],zero,ymm0[4],zero,ymm0[5],zero,ymm0[6],zero,ymm0[7],zero,ymm0[8],zero,ymm0[9],zero,ymm0[10],zero,ymm0[11],zero,ymm0[12],zero,ymm0[13],zero,ymm0[14],zero,ymm0[15],zero
+; AVX512F-NEXT:    vpmulld %zmm2, %zmm0, %zmm0
+; AVX512F-NEXT:    vpmuludq %zmm3, %zmm0, %zmm2
+; AVX512F-NEXT:    vpshufd {{.*#+}} zmm0 = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; AVX512F-NEXT:    vpmuludq %zmm3, %zmm0, %zmm0
+; AVX512F-NEXT:    vpermt2d %zmm0, %zmm5, %zmm2
+; AVX512F-NEXT:    vpmovdw %zmm2, %ymm0
 ; AVX512F-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
 ; AVX512F-NEXT:    retq
 ;
