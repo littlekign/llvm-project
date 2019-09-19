@@ -4243,12 +4243,13 @@ SDValue DAGCombiner::foldUREM(SDNode *node) {
         
         MagicFactors.push_back(AproximateReciprocal);
         
-         if (!D.isStrictlyPositive() || D.isMaxValue()) {
-                    return false; // Divisor must be in the range of [1,2^N)
+        assert(!D.isNullValue() && "Divisor cannot be zero");
+        
+        if (!D.isStrictlyPositive() || D.isMaxValue() || D.isOneValue()) {
+             return false; // Divisor must be in the range of (1,2^N)
         }
         assert((C.isStrictlyPositive() || C.isNullValue()) && "C has to be positive or zero");
                 
-        
         return true;
     };
     
@@ -4337,11 +4338,14 @@ SDValue DAGCombiner::foldSREM(SDNode *node) {
         MagicFactors.push_back(AproximateReciprocal);
         AbsoluteDivisors.push_back(AbsoluteDivisor);
         
-        if (!pd.isStrictlyPositive() || pd.isMaxSignedValue()) {
-                    return false; // Absolute divisor must be in the range of [1,2^(N-1))
+        assert(!pd.isNullValue() && "Divisor cannot be zero");
+        
+        if (!pd.isStrictlyPositive() || pd.isMaxSignedValue() || pd.isOneValue()) {
+            return false; // Absolute divisor must be in the range of (1,2^(N-1))
         }
         
         assert((C.isStrictlyPositive() || C.isNullValue()) && "C has to be positive or zero");
+        
         return true;
     };
     
