@@ -4248,7 +4248,6 @@ SDValue DAGCombiner::foldUREM(SDNode *node) {
         if (!D.isStrictlyPositive() || D.isMaxValue() || D.isOneValue()) {
              return false; // Divisor must be in the range of (1,2^N)
         }
-        assert((C.isStrictlyPositive() || C.isNullValue()) && "C has to be positive or zero");
                 
         return true;
     };
@@ -4343,9 +4342,7 @@ SDValue DAGCombiner::foldSREM(SDNode *node) {
         if (!pd.isStrictlyPositive() || pd.isMaxSignedValue() || pd.isOneValue()) {
             return false; // Absolute divisor must be in the range of (1,2^(N-1))
         }
-        
-        assert((C.isStrictlyPositive() || C.isNullValue()) && "C has to be positive or zero");
-        
+                
         return true;
     };
     
