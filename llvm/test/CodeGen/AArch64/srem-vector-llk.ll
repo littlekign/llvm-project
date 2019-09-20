@@ -5,7 +5,7 @@ define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
   ret <4 x i16> %1
 }
 
-define <4 x i16> @fold_srem_vec_!(<4 x i16> %x) {
+define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
   %1 = srem <4 x i16> %x, <i16 95, i16 95, i16 95, i16 95>
   ret <4 x i16> %1
 }
