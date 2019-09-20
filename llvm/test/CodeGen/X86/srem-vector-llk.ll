@@ -29,13 +29,13 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 }
 
 ; Don't fold if the divisor is one.
-define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
+define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
   %1 = srem <4 x i16> %x, <i16 1, i16 654, i16 23, i16 5423>
   ret <4 x i16> %1
 }
 
 ; Don't fold if the divisor is 2^15.
-define <4 x i16> @dont_fold_srem_i16_smax(<4 x i16> %x) {
+define <4 x i16> @dont_fold_urem_i16_smax(<4 x i16> %x) {
   %1 = srem <4 x i16> %x, <i16 1, i16 32768, i16 23, i16 5423>
   ret <4 x i16> %1
 }
