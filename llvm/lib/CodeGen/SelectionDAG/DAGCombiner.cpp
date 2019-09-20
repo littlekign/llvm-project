@@ -4245,8 +4245,10 @@ SDValue DAGCombiner::foldUREM(SDNode *node) {
         
         assert(!D.isNullValue() && "Divisor cannot be zero");
         
-        if (!D.isStrictlyPositive() || D.isMaxValue() || D.isOneValue()) {
-             return false; // Divisor must be in the range of (1,2^N)
+        if (!D.isStrictlyPositive() || D.isMaxValue() || D.isOneValue() || D.isPowerOf2()) {
+            // Divisor must be in the range of (1,2^N)
+            // We can lower remainder of division by powers of two much better elsewhere.
+            return false;
         }
                 
         return true;
@@ -4339,8 +4341,10 @@ SDValue DAGCombiner::foldSREM(SDNode *node) {
         
         assert(!pd.isNullValue() && "Divisor cannot be zero");
         
-        if (!pd.isStrictlyPositive() || pd.isMaxSignedValue() || pd.isOneValue()) {
-            return false; // Absolute divisor must be in the range of (1,2^(N-1))
+        if (!pd.isStrictlyPositive() || pd.isMaxSignedValue() || pd.isOneValue() || pd.isPowerOf2()) {
+            // Absolute divisor must be in the range of (1,2^(N-1))
+            // We can lower remainder of division by powers of two much better elsewhere.
+            return false;
         }
                 
         return true;
