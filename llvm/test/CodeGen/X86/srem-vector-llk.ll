@@ -3,12 +3,12 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx  | FileCheck %s --check-prefix=CHECK --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=CHECK --check-prefix=AVX --check-prefix=AVX2
 
-define <4 x i16> @fold_srem_vec(<4 x i16> %x) {
+define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
   %1 = srem <4 x i16> %x, <i16 95, i16 -124, i16 98, i16 -1003>
   ret <4 x i16> %1
 }
 
-define <4 x i16> @fold_srem_vec(<4 x i16> %x) {
+define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
   %1 = srem <4 x i16> %x, <i16 95, i16 95, i16 95, i16 95>
   ret <4 x i16> %1
 }
