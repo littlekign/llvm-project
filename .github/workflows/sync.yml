@@ -1,0 +1,19 @@
+name: Sync Fork
+
+on:
+  schedule:
+  - cron: 0 2 * * 1-5
+
+jobs:
+  sync:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: TG908/fork-sync@v1.0.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        owner: llvm
+        destination_branch: master
+        origin_branch: master
+        
