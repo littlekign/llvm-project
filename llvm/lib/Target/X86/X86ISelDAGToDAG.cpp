@@ -752,7 +752,7 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
     return false;
   LoadSDNode *LD = dyn_cast<LoadSDNode>(Callee.getNode());
   if (!LD ||
-      LD->isVolatile() ||
+      !LD->isSimple() ||
       LD->getAddressingMode() != ISD::UNINDEXED ||
       LD->getExtensionType() != ISD::NON_EXTLOAD)
     return false;
@@ -879,10 +879,9 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
       case ISD::FRINT:      Imm = 0x4; break;
       }
       SDLoc dl(N);
-      SDValue Res = CurDAG->getNode(X86ISD::VRNDSCALE, dl,
-                                    N->getValueType(0),
-                                    N->getOperand(0),
-                                    CurDAG->getConstant(Imm, dl, MVT::i8));
+      SDValue Res = CurDAG->getNode(
+          X86ISD::VRNDSCALE, dl, N->getValueType(0), N->getOperand(0),
+          CurDAG->getTargetConstant(Imm, dl, MVT::i8));
       --I;
       CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), Res);
       ++I;
@@ -2311,10 +2310,10 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root, SDNode *Parent,
     return false;
 
   // We can allow a full vector load here since narrowing a load is ok unless
-  // it's volatile.
+  // it's volatile or atomic.
   if (ISD::isNON_EXTLoad(N.getNode())) {
     LoadSDNode *LD = cast<LoadSDNode>(N);
-    if (!LD->isVolatile() &&
+    if (LD->isSimple() &&
         IsProfitableToFold(N, LD, Root) &&
         IsLegalToFold(N, Parent, Root, OptLevel)) {
       PatternNodeWithChain = N;
@@ -2581,6 +2580,7 @@ bool X86DAGToDAGISel::tryFoldLoad(SDNode *Root, SDNode *P, SDValue N,
                                   SDValue &Base, SDValue &Scale,
                                   SDValue &Index, SDValue &Disp,
                                   SDValue &Segment) {
+  assert(Root && P && "Unknown root/parent nodes");
   if (!ISD::isNON_EXTLoad(N.getNode()) ||
       !IsProfitableToFold(N, P, Root) ||
       !IsLegalToFold(N, P, Root, OptLevel))
@@ -5095,10 +5095,9 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     case ISD::FRINT:      Imm = 0x4; break;
     }
     SDLoc dl(Node);
-    SDValue Res = CurDAG->getNode(X86ISD::VRNDSCALE, dl,
-                                  Node->getValueType(0),
+    SDValue Res = CurDAG->getNode(X86ISD::VRNDSCALE, dl, Node->getValueType(0),
                                   Node->getOperand(0),
-                                  CurDAG->getConstant(Imm, dl, MVT::i8));
+                                  CurDAG->getTargetConstant(Imm, dl, MVT::i8));
     ReplaceNode(Node, Res.getNode());
     SelectCode(Res.getNode());
     return;
