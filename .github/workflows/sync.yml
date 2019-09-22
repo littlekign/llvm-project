@@ -15,5 +15,5 @@ jobs:
         github_token: ${{ secrets.CI }}
         owner: llvm
         destination_branch: TG908:master
-        origin_branch: master
+        origin_branch: llvm:master
         
