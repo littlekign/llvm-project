@@ -4352,7 +4352,7 @@ SDValue DAGCombiner::foldSREM(SDNode *node) {
     
     // numerator
     SDValue Numerator = node->getOperand(0);
-    SDValue ExtendedNumerator = DAG.getSExtOrTrunc(Numerator, DL, FVT);
+    SDValue ExtendedNumerator = DAG.getZExtOrTrunc(Numerator, DL, FVT);
     
     // divisor constant
     SDValue Divisor = node->getOperand(1);
@@ -4371,10 +4371,10 @@ SDValue DAGCombiner::foldSREM(SDNode *node) {
     
     // highbits = lowbits * pd >> F
     SDValue Highbits;
-    if (LegalOperations ? TLI.isOperationLegal(ISD::MULHS, FVT) : TLI.isOperationLegalOrCustom(ISD::MULHS, FVT))
-          Highbits = DAG.getNode(ISD::MULHS, DL, FVT, Lowbits, ExtendedAbsoluteDivisor);
-    else if (LegalOperations ? TLI.isOperationLegal(ISD::SMUL_LOHI, FVT) : TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, FVT)) {
-        SDValue LoHi = DAG.getNode(ISD::SMUL_LOHI, DL, DAG.getVTList(FVT, FVT), Lowbits, ExtendedAbsoluteDivisor);
+    if (LegalOperations ? TLI.isOperationLegal(ISD::MULHU, FVT) : TLI.isOperationLegalOrCustom(ISD::MULHU, FVT))
+          Highbits = DAG.getNode(ISD::MULHU, DL, FVT, Lowbits, ExtendedAbsoluteDivisor);
+    else if (LegalOperations ? TLI.isOperationLegal(ISD::UMUL_LOHI, FVT) : TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, FVT)) {
+        SDValue LoHi = DAG.getNode(ISD::UMUL_LOHI, DL, DAG.getVTList(FVT, FVT), Lowbits, ExtendedAbsoluteDivisor);
         Highbits = SDValue(LoHi.getNode(), 1);
     } else {
         return SDValue(); // No mulhu or equivalent
