@@ -4352,7 +4352,7 @@ SDValue DAGCombiner::foldSREM(SDNode *node) {
     
     // numerator
     SDValue Numerator = node->getOperand(0);
-    SDValue ExtendedNumerator = DAG.getZExtOrTrunc(Numerator, DL, FVT);
+    SDValue ExtendedNumerator = DAG.getSExtOrTrunc(Numerator, DL, FVT);
     
     // divisor constant
     SDValue Divisor = node->getOperand(1);
