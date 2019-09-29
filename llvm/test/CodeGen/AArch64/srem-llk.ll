@@ -14,7 +14,7 @@ define i32 @fold_srem_positve_odd(i32 %x) {
 ; CHECK-NEXT:    mul x9, x9, x10
 ; CHECK-NEXT:    mov w10, #95
 ; CHECK-NEXT:    and w8, w8, w0, asr #31
-; CHECK-NEXT:    smulh x9, x9, x10
+; CHECK-NEXT:    umulh x9, x9, x10
 ; CHECK-NEXT:    sub w0, w9, w8
 ; CHECK-NEXT:    ret
   %1 = srem i32 %x, 95
@@ -35,7 +35,7 @@ define i32 @fold_srem_positve_even(i32 %x) {
 ; CHECK-NEXT:    mul x9, x9, x10
 ; CHECK-NEXT:    mov w10, #1060
 ; CHECK-NEXT:    and w8, w8, w0, asr #31
-; CHECK-NEXT:    smulh x9, x9, x10
+; CHECK-NEXT:    umulh x9, x9, x10
 ; CHECK-NEXT:    sub w0, w9, w8
 ; CHECK-NEXT:    ret
   %1 = srem i32 %x, 1060
@@ -56,7 +56,7 @@ define i32 @fold_srem_negative_odd(i32 %x) {
 ; CHECK-NEXT:    mul x9, x9, x10
 ; CHECK-NEXT:    mov w10, #723
 ; CHECK-NEXT:    and w8, w8, w0, asr #31
-; CHECK-NEXT:    smulh x9, x9, x10
+; CHECK-NEXT:    umulh x9, x9, x10
 ; CHECK-NEXT:    sub w0, w9, w8
 ; CHECK-NEXT:    ret
   %1 = srem i32 %x, -723
@@ -77,7 +77,7 @@ define i32 @fold_srem_negative_even(i32 %x) {
 ; CHECK-NEXT:    mul x9, x9, x10
 ; CHECK-NEXT:    mov w10, #22981
 ; CHECK-NEXT:    and w8, w8, w0, asr #31
-; CHECK-NEXT:    smulh x9, x9, x10
+; CHECK-NEXT:    umulh x9, x9, x10
 ; CHECK-NEXT:    sub w0, w9, w8
 ; CHECK-NEXT:    ret
   %1 = srem i32 %x, -22981

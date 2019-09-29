@@ -22,7 +22,7 @@ define i32 @f(i1 %foo, i16* %tm_year2, i8* %bar, i16 %zed, i32 %zed2) {
 ; CHECK-NEXT:    movabsq $184467440737095517, %rax # imm = 0x28F5C28F5C28F5D
 ; CHECK-NEXT:    imulq %rdi, %rax
 ; CHECK-NEXT:    movl $100, %edx
-; CHECK-NEXT:    imulq %rdx
+; CHECK-NEXT:    mulq %rdx
 ; CHECK-NEXT:    sarl $31, %edi
 ; CHECK-NEXT:    andl $99, %edi
 ; CHECK-NEXT:    subl %edi, %edx

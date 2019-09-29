@@ -11,8 +11,8 @@ define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
 ; CHECK-NEXT:    sshll v3.4s, v0.4h, #0
 ; CHECK-NEXT:    adrp x8, .LCPI0_2
 ; CHECK-NEXT:    mul v1.4s, v3.4s, v1.4s
-; CHECK-NEXT:    smull2 v3.2d, v1.4s, v2.4s
-; CHECK-NEXT:    smull v1.2d, v1.2s, v2.2s
+; CHECK-NEXT:    umull2 v3.2d, v1.4s, v2.4s
+; CHECK-NEXT:    umull v1.2d, v1.2s, v2.2s
 ; CHECK-NEXT:    ldr d2, [x8, :lo12:.LCPI0_2]
 ; CHECK-NEXT:    sshr v0.4h, v0.4h, #15
 ; CHECK-NEXT:    uzp2 v1.4s, v1.4s, v3.4s
@@ -33,8 +33,8 @@ define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
 ; CHECK-NEXT:    dup v4.4s, w8
 ; CHECK-NEXT:    movi v2.4s, #95
 ; CHECK-NEXT:    mul v1.4s, v1.4s, v4.4s
-; CHECK-NEXT:    smull2 v4.2d, v1.4s, v2.4s
-; CHECK-NEXT:    smull v1.2d, v1.2s, v2.2s
+; CHECK-NEXT:    umull2 v4.2d, v1.4s, v2.4s
+; CHECK-NEXT:    umull v1.2d, v1.2s, v2.2s
 ; CHECK-NEXT:    sshr v0.4h, v0.4h, #15
 ; CHECK-NEXT:    movi v3.4h, #94
 ; CHECK-NEXT:    uzp2 v1.4s, v1.4s, v4.4s
@@ -115,7 +115,7 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; CHECK-NEXT:    smov w8, v0.h[1]
 ; CHECK-NEXT:    mul x10, x10, x12
 ; CHECK-NEXT:    mov w12, #95
-; CHECK-NEXT:    smulh x10, x10, x12
+; CHECK-NEXT:    umulh x10, x10, x12
 ; CHECK-NEXT:    add w12, w8, #31 // =31
 ; CHECK-NEXT:    cmp w8, #0 // =0
 ; CHECK-NEXT:    csel w12, w12, w8, lt
@@ -177,14 +177,14 @@ define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
 ; CHECK-NEXT:    sxtw x14, w14
 ; CHECK-NEXT:    mul x13, x14, x13
 ; CHECK-NEXT:    mov w14, #23
-; CHECK-NEXT:    smulh x8, x8, x14
+; CHECK-NEXT:    umulh x8, x8, x14
 ; CHECK-NEXT:    mov w14, #654
-; CHECK-NEXT:    smulh x11, x11, x14
+; CHECK-NEXT:    umulh x11, x11, x14
 ; CHECK-NEXT:    mov w14, #5423
 ; CHECK-NEXT:    sub w8, w8, w9
 ; CHECK-NEXT:    sub w9, w11, w12
 ; CHECK-NEXT:    movi d0, #0000000000000000
-; CHECK-NEXT:    smulh x13, x13, x14
+; CHECK-NEXT:    umulh x13, x13, x14
 ; CHECK-NEXT:    mov v0.h[1], w9
 ; CHECK-NEXT:    mov v0.h[2], w8
 ; CHECK-NEXT:    sub w8, w13, w10
@@ -219,10 +219,10 @@ define <4 x i16> @dont_fold_srem_i16_smax(<4 x i16> %x) {
 ; CHECK-NEXT:    sxtw x12, w12
 ; CHECK-NEXT:    mul x11, x12, x11
 ; CHECK-NEXT:    mov w12, #23
-; CHECK-NEXT:    smulh x9, x9, x12
+; CHECK-NEXT:    umulh x9, x9, x12
 ; CHECK-NEXT:    mov w12, #5423
 ; CHECK-NEXT:    smov w8, v0.h[1]
-; CHECK-NEXT:    smulh x11, x11, x12
+; CHECK-NEXT:    umulh x11, x11, x12
 ; CHECK-NEXT:    mov w12, #32767
 ; CHECK-NEXT:    add w12, w8, w12
 ; CHECK-NEXT:    cmp w8, #0 // =0

@@ -90,10 +90,9 @@ define i16 @test_srem_even(i16 %X) nounwind {
 ; CHECK-NEXT:    and w9, w9, w8, lsr #15
 ; CHECK-NEXT:    mul w8, w8, w10
 ; CHECK-NEXT:    mov w10, #14
-; CHECK-NEXT:    smull x8, w8, w10
+; CHECK-NEXT:    umull x8, w8, w10
 ; CHECK-NEXT:    lsr x8, x8, #32
-; CHECK-NEXT:    sub w8, w8, w9
-; CHECK-NEXT:    tst w8, #0xffff
+; CHECK-NEXT:    cmp w8, w9
 ; CHECK-NEXT:    cset w0, ne
 ; CHECK-NEXT:    ret
   %srem = srem i16 %X, 14

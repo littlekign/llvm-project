@@ -422,7 +422,7 @@ define <4 x i32> @srem_op1_constant(i32* %p) nounwind {
 ; SSE-NEXT:    movabsq $439208192231179801, %rax # imm = 0x618618618618619
 ; SSE-NEXT:    imulq %rcx, %rax
 ; SSE-NEXT:    movl $42, %edx
-; SSE-NEXT:    imulq %rdx
+; SSE-NEXT:    mulq %rdx
 ; SSE-NEXT:    sarl $31, %ecx
 ; SSE-NEXT:    andl $41, %ecx
 ; SSE-NEXT:    subl %ecx, %edx
@@ -435,7 +435,7 @@ define <4 x i32> @srem_op1_constant(i32* %p) nounwind {
 ; AVX-NEXT:    movabsq $439208192231179801, %rax # imm = 0x618618618618619
 ; AVX-NEXT:    imulq %rcx, %rax
 ; AVX-NEXT:    movl $42, %edx
-; AVX-NEXT:    imulq %rdx
+; AVX-NEXT:    mulq %rdx
 ; AVX-NEXT:    sarl $31, %ecx
 ; AVX-NEXT:    andl $41, %ecx
 ; AVX-NEXT:    subl %ecx, %edx
