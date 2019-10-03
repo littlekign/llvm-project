@@ -58,22 +58,15 @@ define i32 @fold_urem_positive_odd(i32 %x) {
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    slli a0, a0, 32
 ; RV64IM-NEXT:    srli a0, a0, 32
-; RV64IM-NEXT:    lui a1, 1423
-; RV64IM-NEXT:    addiw a1, a1, -733
+; RV64IM-NEXT:    lui a1, 176602
+; RV64IM-NEXT:    addiw a1, a1, 1121
 ; RV64IM-NEXT:    slli a1, a1, 15
-; RV64IM-NEXT:    addi a1, a1, 1035
+; RV64IM-NEXT:    addi a1, a1, 345
 ; RV64IM-NEXT:    slli a1, a1, 13
-; RV64IM-NEXT:    addi a1, a1, -1811
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, 561
-; RV64IM-NEXT:    mulhu a1, a0, a1
-; RV64IM-NEXT:    sub a2, a0, a1
-; RV64IM-NEXT:    srli a2, a2, 1
-; RV64IM-NEXT:    add a1, a2, a1
-; RV64IM-NEXT:    srli a1, a1, 6
-; RV64IM-NEXT:    addi a2, zero, 95
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    addi a1, a1, -603
+; RV64IM-NEXT:    mul a0, a0, a1
+; RV64IM-NEXT:    addi a1, zero, 95
+; RV64IM-NEXT:    mulhu a0, a0, a1
 ; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = urem i32 %x, 95
@@ -128,19 +121,15 @@ define i32 @fold_urem_positive_even(i32 %x) {
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    slli a0, a0, 32
 ; RV64IM-NEXT:    srli a0, a0, 32
-; RV64IM-NEXT:    lui a1, 1048020
+; RV64IM-NEXT:    lui a1, 15828
 ; RV64IM-NEXT:    addiw a1, a1, -1793
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, 139
-; RV64IM-NEXT:    slli a1, a1, 14
-; RV64IM-NEXT:    addi a1, a1, 1793
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -139
-; RV64IM-NEXT:    mulhu a1, a0, a1
-; RV64IM-NEXT:    srli a1, a1, 10
-; RV64IM-NEXT:    addi a2, zero, 1060
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    slli a1, a1, 15
+; RV64IM-NEXT:    addi a1, a1, 1113
+; RV64IM-NEXT:    slli a1, a1, 13
+; RV64IM-NEXT:    addi a1, a1, -1020
+; RV64IM-NEXT:    mul a0, a0, a1
+; RV64IM-NEXT:    addi a1, zero, 1060
+; RV64IM-NEXT:    mulhu a0, a0, a1
 ; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = urem i32 %x, 1060

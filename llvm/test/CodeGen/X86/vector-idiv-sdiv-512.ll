@@ -442,20 +442,30 @@ define <32 x i16> @test_rem7_32i16(<32 x i16> %a) nounwind {
 ; AVX512F-LABEL: test_rem7_32i16:
 ; AVX512F:       # %bb.0:
 ; AVX512F-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512F-NEXT:    vmovdqa {{.*#+}} ymm2 = [18725,18725,18725,18725,18725,18725,18725,18725,18725,18725,18725,18725,18725,18725,18725,18725]
-; AVX512F-NEXT:    vpmulhw %ymm2, %ymm1, %ymm3
-; AVX512F-NEXT:    vpsrlw $15, %ymm3, %ymm4
-; AVX512F-NEXT:    vpsraw $1, %ymm3, %ymm3
-; AVX512F-NEXT:    vpaddw %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vmovdqa {{.*#+}} ymm4 = [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
-; AVX512F-NEXT:    vpmullw %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vpsubw %ymm3, %ymm1, %ymm1
-; AVX512F-NEXT:    vpmulhw %ymm2, %ymm0, %ymm2
-; AVX512F-NEXT:    vpsrlw $15, %ymm2, %ymm3
-; AVX512F-NEXT:    vpsraw $1, %ymm2, %ymm2
-; AVX512F-NEXT:    vpaddw %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpmullw %ymm4, %ymm2, %ymm2
-; AVX512F-NEXT:    vpsubw %ymm2, %ymm0, %ymm0
+; AVX512F-NEXT:    vpmovsxwd %ymm1, %zmm2
+; AVX512F-NEXT:    vpbroadcastd {{.*#+}} zmm3 = [613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757,613566757]
+; AVX512F-NEXT:    vpmulld %zmm3, %zmm2, %zmm2
+; AVX512F-NEXT:    vpbroadcastd {{.*#+}} zmm4 = [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
+; AVX512F-NEXT:    vpmuludq %zmm4, %zmm2, %zmm5
+; AVX512F-NEXT:    vpshufd {{.*#+}} zmm2 = zmm2[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; AVX512F-NEXT:    vpmuludq %zmm4, %zmm2, %zmm2
+; AVX512F-NEXT:    vmovdqa64 {{.*#+}} zmm6 = [1,17,3,19,5,21,7,23,9,25,11,27,13,29,15,31]
+; AVX512F-NEXT:    vpermt2d %zmm2, %zmm6, %zmm5
+; AVX512F-NEXT:    vpmovdw %zmm5, %ymm2
+; AVX512F-NEXT:    vpsraw $15, %ymm1, %ymm1
+; AVX512F-NEXT:    vmovdqa {{.*#+}} ymm5 = [6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6]
+; AVX512F-NEXT:    vpand %ymm5, %ymm1, %ymm1
+; AVX512F-NEXT:    vpsubw %ymm1, %ymm2, %ymm1
+; AVX512F-NEXT:    vpmovsxwd %ymm0, %zmm2
+; AVX512F-NEXT:    vpmulld %zmm3, %zmm2, %zmm2
+; AVX512F-NEXT:    vpmuludq %zmm4, %zmm2, %zmm3
+; AVX512F-NEXT:    vpshufd {{.*#+}} zmm2 = zmm2[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; AVX512F-NEXT:    vpmuludq %zmm4, %zmm2, %zmm2
+; AVX512F-NEXT:    vpermt2d %zmm2, %zmm6, %zmm3
+; AVX512F-NEXT:    vpmovdw %zmm3, %ymm2
+; AVX512F-NEXT:    vpsraw $15, %ymm0, %ymm0
+; AVX512F-NEXT:    vpand %ymm5, %ymm0, %ymm0
+; AVX512F-NEXT:    vpsubw %ymm0, %ymm2, %ymm0
 ; AVX512F-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
 ; AVX512F-NEXT:    retq
 ;

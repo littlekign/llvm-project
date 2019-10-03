@@ -56,22 +56,18 @@ define i32 @fold_srem_positive_odd(i32 %x) {
 ; RV64IM-LABEL: fold_srem_positive_odd:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    sext.w a0, a0
-; RV64IM-NEXT:    lui a1, 1045903
-; RV64IM-NEXT:    addiw a1, a1, -733
+; RV64IM-NEXT:    lui a1, 176602
+; RV64IM-NEXT:    addiw a1, a1, 1121
 ; RV64IM-NEXT:    slli a1, a1, 15
-; RV64IM-NEXT:    addi a1, a1, 1035
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -905
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -1767
-; RV64IM-NEXT:    mulh a1, a0, a1
-; RV64IM-NEXT:    add a1, a1, a0
-; RV64IM-NEXT:    srli a2, a1, 63
-; RV64IM-NEXT:    srai a1, a1, 6
-; RV64IM-NEXT:    add a1, a1, a2
+; RV64IM-NEXT:    addi a1, a1, 345
+; RV64IM-NEXT:    slli a1, a1, 13
+; RV64IM-NEXT:    addi a1, a1, -603
+; RV64IM-NEXT:    mul a1, a0, a1
 ; RV64IM-NEXT:    addi a2, zero, 95
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    mulhu a1, a1, a2
+; RV64IM-NEXT:    srli a0, a0, 31
+; RV64IM-NEXT:    andi a0, a0, 94
+; RV64IM-NEXT:    subw a0, a1, a0
 ; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = srem i32 %x, 95
@@ -126,19 +122,18 @@ define i32 @fold_srem_positive_even(i32 %x) {
 ; RV64IM-LABEL: fold_srem_positive_even:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    sext.w a0, a0
-; RV64IM-NEXT:    lui a1, 506482
-; RV64IM-NEXT:    addiw a1, a1, -31
+; RV64IM-NEXT:    lui a1, 15828
+; RV64IM-NEXT:    addiw a1, a1, -1793
+; RV64IM-NEXT:    slli a1, a1, 15
+; RV64IM-NEXT:    addi a1, a1, 1113
 ; RV64IM-NEXT:    slli a1, a1, 13
-; RV64IM-NEXT:    addi a1, a1, 711
-; RV64IM-NEXT:    slli a1, a1, 19
-; RV64IM-NEXT:    addi a1, a1, 1979
-; RV64IM-NEXT:    mulh a1, a0, a1
-; RV64IM-NEXT:    srli a2, a1, 63
-; RV64IM-NEXT:    srai a1, a1, 9
-; RV64IM-NEXT:    add a1, a1, a2
+; RV64IM-NEXT:    addi a1, a1, -1020
+; RV64IM-NEXT:    mul a1, a0, a1
 ; RV64IM-NEXT:    addi a2, zero, 1060
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    mulhu a1, a1, a2
+; RV64IM-NEXT:    srli a0, a0, 31
+; RV64IM-NEXT:    andi a0, a0, 1059
+; RV64IM-NEXT:    subw a0, a1, a0
 ; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = srem i32 %x, 1060
@@ -193,22 +188,18 @@ define i32 @fold_srem_negative_odd(i32 %x) {
 ; RV64IM-LABEL: fold_srem_negative_odd:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    sext.w a0, a0
-; RV64IM-NEXT:    lui a1, 4781
-; RV64IM-NEXT:    addiw a1, a1, 2045
+; RV64IM-NEXT:    lui a1, 11603
+; RV64IM-NEXT:    addiw a1, a1, -2045
 ; RV64IM-NEXT:    slli a1, a1, 13
-; RV64IM-NEXT:    addi a1, a1, 1371
-; RV64IM-NEXT:    slli a1, a1, 13
-; RV64IM-NEXT:    addi a1, a1, -11
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -1355
-; RV64IM-NEXT:    mulh a1, a0, a1
-; RV64IM-NEXT:    sub a1, a1, a0
-; RV64IM-NEXT:    srli a2, a1, 63
-; RV64IM-NEXT:    srai a1, a1, 9
-; RV64IM-NEXT:    add a1, a1, a2
-; RV64IM-NEXT:    addi a2, zero, -723
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    addi a1, a1, -1371
+; RV64IM-NEXT:    slli a1, a1, 16
+; RV64IM-NEXT:    addi a1, a1, 91
+; RV64IM-NEXT:    mul a1, a0, a1
+; RV64IM-NEXT:    addi a2, zero, 723
+; RV64IM-NEXT:    mulhu a1, a1, a2
+; RV64IM-NEXT:    srli a0, a0, 31
+; RV64IM-NEXT:    andi a0, a0, 722
+; RV64IM-NEXT:    subw a0, a1, a0
 ; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = srem i32 %x, -723
@@ -266,22 +257,20 @@ define i32 @fold_srem_negative_even(i32 %x) {
 ; RV64IM-LABEL: fold_srem_negative_even:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    sext.w a0, a0
-; RV64IM-NEXT:    lui a1, 1036895
-; RV64IM-NEXT:    addiw a1, a1, 999
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, 11
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -523
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -481
-; RV64IM-NEXT:    mulh a1, a0, a1
-; RV64IM-NEXT:    srli a2, a1, 63
-; RV64IM-NEXT:    srai a1, a1, 12
-; RV64IM-NEXT:    add a1, a1, a2
-; RV64IM-NEXT:    lui a2, 1048570
-; RV64IM-NEXT:    addiw a2, a2, 1595
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    srli a1, a0, 31
+; RV64IM-NEXT:    lui a2, 6
+; RV64IM-NEXT:    addiw a3, a2, -1596
+; RV64IM-NEXT:    and a1, a1, a3
+; RV64IM-NEXT:    lui a3, 11681
+; RV64IM-NEXT:    addiw a3, a3, -999
+; RV64IM-NEXT:    slli a3, a3, 12
+; RV64IM-NEXT:    addi a3, a3, -11
+; RV64IM-NEXT:    slli a3, a3, 12
+; RV64IM-NEXT:    addi a3, a3, 524
+; RV64IM-NEXT:    mul a0, a0, a3
+; RV64IM-NEXT:    addiw a2, a2, -1595
+; RV64IM-NEXT:    mulhu a0, a0, a2
+; RV64IM-NEXT:    subw a0, a0, a1
 ; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = srem i32 %x, -22981

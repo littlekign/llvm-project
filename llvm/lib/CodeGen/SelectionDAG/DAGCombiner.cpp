@@ -490,6 +490,8 @@ namespace {
 
     SDValue visitShiftByConstant(SDNode *N);
 
+    SDValue foldUREM(SDNode *N);
+    SDValue foldSREM(SDNode *N);
     SDValue foldSelectOfConstants(SDNode *N);
     SDValue foldVSelectOfConstants(SDNode *N);
     SDValue foldBinOpIntoSelect(SDNode *BO);
@@ -3911,6 +3913,20 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
 
   AttributeList Attr = DAG.getMachineFunction().getFunction().getAttributes();
 
+  if (DAG.isKnownNeverZero(N1) && !TLI.isIntDivCheap(VT, Attr)) {
+    if (isConstantOrConstantVector(N1)) {
+      // check if there is a div to combine with rem.
+      unsigned DivOpcode = isSigned ? ISD::SDIV : ISD::UDIV;
+      SDNode *DivNode =
+          DAG.getNodeIfExists(DivOpcode, N->getVTList(), {N0, N1});
+      if (!DivNode) {
+        SDValue OptimizedRem = isSigned ? foldSREM(N) : foldUREM(N);
+        if (OptimizedRem.getNode())
+          return OptimizedRem;
+      }
+    }
+  }
+
   // If X/C can be simplified by the division-by-constant logic, lower
   // X%C to the equivalent of X-X/C*C.
   // Reuse the SDIVLike/UDIVLike combines - to avoid mangling nodes, the
@@ -3940,6 +3956,238 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
     return DivRem.getValue(1);
 
   return SDValue();
+}
+
+/// Given an ISD::UREM where the divisor is constant,
+/// return a DAG expression that will generate the same result
+/// using only multiplications, additions and shifts.
+/// Ref: D. Lemire, O. Kaser, and N. Kurz, "Faster Remainder by Direct
+/// Computation" (LKK)
+SDValue DAGCombiner::foldUREM(SDNode *node) {
+  SDLoc DL(node);
+  EVT VT = node->getValueType(0);
+  EVT FVT;
+  if (VT.isVector()) {
+    EVT SVT =
+        EVT::getIntegerVT(*DAG.getContext(), VT.getScalarSizeInBits() * 2);
+    FVT = EVT::getVectorVT(*DAG.getContext(), SVT, VT.getVectorElementCount());
+  } else {
+    FVT = EVT::getIntegerVT(*DAG.getContext(), VT.getScalarSizeInBits() * 2);
+  }
+
+  unsigned F = FVT.getScalarSizeInBits();
+
+  // when optimising for minimum size, we don't want to expand a div to a mul
+  // and a shift.
+  if (DAG.getMachineFunction().getFunction().hasMinSize())
+    return SDValue();
+
+  // Check to see if we can do this.
+  if (!isTypeLegal(VT) || !isTypeLegal(FVT))
+    return SDValue();
+
+  // If MUL is unavailable, we cannot proceed in any case.
+  if (!TLI.isOperationLegalOrCustom(ISD::MUL, FVT))
+    return SDValue();
+
+  SmallVector<SDValue, 8> MagicFactors;
+
+  auto BuildUREMPattern = [&](ConstantSDNode *DivisorConstant) {
+    // calculate magic number: c = ceil(2^N / d) + 1
+    const APInt &D = DivisorConstant->getAPIntValue();
+    APInt C = APInt::getMaxValue(F).udiv(D.zext(F)).uadd_sat(APInt(F, 1));
+    SDValue AproximateReciprocal = DAG.getConstant(C, DL, FVT.getScalarType());
+
+    MagicFactors.push_back(AproximateReciprocal);
+
+    assert(!D.isNullValue() && "Divisor cannot be zero");
+
+    if (!D.isStrictlyPositive() || D.isMaxValue() || D.isOneValue() ||
+        D.isPowerOf2()) {
+      // Divisor must be in the range of (1,2^N)
+      // We can lower remainder of division by powers of two much better
+      // elsewhere.
+      return false;
+    }
+
+    return true;
+  };
+
+  // numerator
+  SDValue Numerator = node->getOperand(0);
+  SDValue ExtendedNumerator = DAG.getZExtOrTrunc(Numerator, DL, FVT);
+
+  // divisor constant
+  SDValue Divisor = node->getOperand(1);
+  SDValue ExtendedDivisor = DAG.getZExtOrTrunc(Divisor, DL, FVT);
+
+  if (!ISD::matchUnaryPredicate(Divisor, BuildUREMPattern))
+    return SDValue();
+
+  SDValue MagicFactor = VT.isVector()
+                            ? DAG.getBuildVector(FVT, DL, MagicFactors)
+                            : MagicFactors[0];
+
+  // lowbits = c * n
+  SDValue Lowbits =
+      DAG.getNode(ISD::MUL, DL, FVT, MagicFactor, ExtendedNumerator);
+
+  // result = lowbits * d >> F
+  SDValue Result;
+  if (LegalOperations ? TLI.isOperationLegal(ISD::MULHU, FVT)
+                      : TLI.isOperationLegalOrCustom(ISD::MULHU, FVT))
+    Result = DAG.getNode(ISD::MULHU, DL, FVT, Lowbits, ExtendedDivisor);
+  else if (LegalOperations
+               ? TLI.isOperationLegal(ISD::UMUL_LOHI, FVT)
+               : TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, FVT)) {
+    SDValue LoHi = DAG.getNode(ISD::UMUL_LOHI, DL, DAG.getVTList(FVT, FVT),
+                               Lowbits, ExtendedDivisor);
+    Result = SDValue(LoHi.getNode(), 1);
+  } else {
+    return SDValue(); // No mulhu or equivalent
+  }
+
+  AddToWorklist(MagicFactor.getNode());
+  AddToWorklist(ExtendedNumerator.getNode());
+  AddToWorklist(Lowbits.getNode());
+  AddToWorklist(ExtendedDivisor.getNode());
+  AddToWorklist(Result.getNode());
+
+  return DAG.getZExtOrTrunc(Result, DL, VT);
+}
+
+/// Given an ISD::SREM where the divisor is constant,
+/// return a DAG expression that will generate the same result
+/// using only multiplications, additions and shifts.
+/// Ref: D. Lemire, O. Kaser, and N. Kurz, "Faster Remainder by Direct
+/// Computation" (LKK)
+SDValue DAGCombiner::foldSREM(SDNode *node) {
+  SDLoc DL(node);
+  EVT VT = node->getValueType(0);
+  EVT FVT;
+  if (VT.isVector()) {
+    EVT TmpVT =
+        EVT::getIntegerVT(*DAG.getContext(), VT.getScalarSizeInBits() * 2);
+    FVT =
+        EVT::getVectorVT(*DAG.getContext(), TmpVT, VT.getVectorElementCount());
+  } else {
+    FVT = EVT::getIntegerVT(*DAG.getContext(), VT.getScalarSizeInBits() * 2);
+  }
+
+  unsigned N = VT.getScalarSizeInBits();
+  unsigned F = FVT.getScalarSizeInBits();
+
+  // Check to see if we can do this.
+  if (!isTypeLegal(VT) || !isTypeLegal(FVT))
+    return SDValue();
+
+  // when optimising for minimum size, we don't want to expand a div to a mul
+  // and a shift.
+  if (DAG.getMachineFunction().getFunction().hasMinSize())
+    return SDValue();
+
+  // If MUL is unavailable, we cannot proceed in any case.
+  if (!TLI.isOperationLegalOrCustom(ISD::MUL, FVT))
+    return SDValue();
+
+  if (!TLI.isOperationLegalOrCustomOrPromote(ISD::SRA, FVT) &&
+      TLI.isOperationExpand(ISD::SRA, FVT))
+    return SDValue();
+
+  SmallVector<SDValue, 8> MagicFactors, AbsoluteDivisors;
+
+  auto BuildSREMPattern = [&](ConstantSDNode *DivisorConstant) {
+    // calculate magic number: c = floor( (1<<F) / pd ) + 1
+    APInt pd = DivisorConstant->getAPIntValue().abs();
+    APInt IsPow2 = APInt(F, pd.isPowerOf2());
+    APInt C = APInt::getMaxValue(F)
+                  .udiv(pd.zext(F))
+                  .uadd_sat(APInt(F, 1))
+                  .uadd_sat(IsPow2);
+
+    SDValue AproximateReciprocal = DAG.getConstant(C, DL, FVT.getScalarType());
+    SDValue AbsoluteDivisor = DAG.getConstant(pd, DL, VT.getScalarType());
+
+    MagicFactors.push_back(AproximateReciprocal);
+    AbsoluteDivisors.push_back(AbsoluteDivisor);
+
+    assert(!pd.isNullValue() && "Divisor cannot be zero");
+
+    if (!pd.isStrictlyPositive() || pd.isMaxSignedValue() || pd.isOneValue() ||
+        pd.isPowerOf2()) {
+      // Absolute divisor must be in the range of (1,2^(N-1))
+      // We can lower remainder of division by powers of two much better
+      // elsewhere.
+      return false;
+    }
+
+    return true;
+  };
+
+  // numerator
+  SDValue Numerator = node->getOperand(0);
+  SDValue ExtendedNumerator = DAG.getSExtOrTrunc(Numerator, DL, FVT);
+
+  // divisor constant
+  SDValue Divisor = node->getOperand(1);
+
+  if (!ISD::matchUnaryPredicate(Divisor, BuildSREMPattern))
+    return SDValue();
+
+  // absolute divisor
+  SDValue AbsoluteDivisor = VT.isVector()
+                                ? DAG.getBuildVector(VT, DL, AbsoluteDivisors)
+                                : AbsoluteDivisors[0];
+  SDValue ExtendedAbsoluteDivisor =
+      DAG.getZExtOrTrunc(AbsoluteDivisor, DL, FVT);
+
+  SDValue MagicFactor = VT.isVector()
+                            ? DAG.getBuildVector(FVT, DL, MagicFactors)
+                            : MagicFactors[0];
+
+  // lowbits = c * n
+  SDValue Lowbits =
+      DAG.getNode(ISD::MUL, DL, FVT, MagicFactor, ExtendedNumerator);
+
+  // highbits = lowbits * pd >> F
+  SDValue Highbits;
+  if (LegalOperations ? TLI.isOperationLegal(ISD::MULHU, FVT)
+                      : TLI.isOperationLegalOrCustom(ISD::MULHU, FVT))
+    Highbits =
+        DAG.getNode(ISD::MULHU, DL, FVT, Lowbits, ExtendedAbsoluteDivisor);
+  else if (LegalOperations
+               ? TLI.isOperationLegal(ISD::UMUL_LOHI, FVT)
+               : TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, FVT)) {
+    SDValue LoHi = DAG.getNode(ISD::UMUL_LOHI, DL, DAG.getVTList(FVT, FVT),
+                               Lowbits, ExtendedAbsoluteDivisor);
+    Highbits = SDValue(LoHi.getNode(), 1);
+  } else {
+    return SDValue(); // No mulhu or equivalent
+  }
+  SDValue TruncatedHighbits = DAG.getSExtOrTrunc(Highbits, DL, VT);
+
+  // result = highbits -((pd - 1) & (n >> N-1))
+  SDValue One = DAG.getConstant(1, DL, VT);
+  SDValue DecrementedAbsoluteDivisor =
+      DAG.getNode(ISD::SUB, DL, VT, AbsoluteDivisor, One);
+  SDValue ShiftAmount = DAG.getConstant(N - 1, DL, VT);
+  SDValue Sign = DAG.getNode(ISD::SRA, DL, VT, Numerator, ShiftAmount);
+  SDValue And = DAG.getNode(ISD::AND, DL, VT, DecrementedAbsoluteDivisor, Sign);
+  SDValue Result = DAG.getNode(ISD::SUB, DL, VT, TruncatedHighbits, And);
+
+  AddToWorklist(MagicFactor.getNode());
+  AddToWorklist(ExtendedNumerator.getNode());
+  AddToWorklist(Lowbits.getNode());
+  AddToWorklist(AbsoluteDivisor.getNode());
+  AddToWorklist(ExtendedAbsoluteDivisor.getNode());
+  AddToWorklist(Highbits.getNode());
+  AddToWorklist(One.getNode());
+  AddToWorklist(DecrementedAbsoluteDivisor.getNode());
+  AddToWorklist(ShiftAmount.getNode());
+  AddToWorklist(Sign.getNode());
+  AddToWorklist(And.getNode());
+
+  return Result;
 }
 
 SDValue DAGCombiner::visitMULHS(SDNode *N) {
