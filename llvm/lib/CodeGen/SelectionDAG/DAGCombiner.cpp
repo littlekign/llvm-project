@@ -4015,6 +4015,25 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
 
   AttributeList Attr = DAG.getMachineFunction().getFunction().getAttributes();
 
+  if (DAG.isKnownNeverZero(N1) && !TLI.isIntDivCheap(VT, Attr) &&
+      isConstantOrConstantVector(N1)) {
+    // check if there is a div to combine with rem.
+    unsigned DivOpcode = isSigned ? ISD::SDIV : ISD::UDIV;
+    SDNode *DivNode = DAG.getNodeIfExists(DivOpcode, N->getVTList(), {N0, N1});
+    if (!DivNode) {
+      SmallVector<SDNode *, 14> Built;
+      SDValue OptimizedRem =
+          isSigned ? TLI.BuildSREM(N, DAG, LegalOperations, Built)
+                   : SDValue(); // placeholder for urem
+      if (OptimizedRem.getNode()) {
+        for (SDNode *N : Built) {
+          AddToWorklist(N);
+        }
+        return OptimizedRem;
+      }
+    }
+  }
+
   // If X/C can be simplified by the division-by-constant logic, lower
   // X%C to the equivalent of X-X/C*C.
   // Reuse the SDIVLike/UDIVLike combines - to avoid mangling nodes, the

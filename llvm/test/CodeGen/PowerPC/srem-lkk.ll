@@ -2,8 +2,8 @@
 ; RUN: llc -verify-machineinstrs -mtriple=powerpc-unknown-linux-gnu -mcpu=ppc64 < %s | FileCheck -check-prefixes=CHECK,CHECK64 %s
 ; RUN: llc -verify-machineinstrs -mtriple=powerpc-unknown-linux-gnu -mcpu=ppc < %s | FileCheck -check-prefixes=CHECK,CHECK32 %s
 
-define i32 @fold_srem_positive_odd(i32 %x) {
-; CHECK-LABEL: fold_srem_positive_odd:
+define i32 @lower_srem_positive_odd(i32 %x) {
+; CHECK-LABEL: lower_srem_positive_odd:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    lis 4, -21386
 ; CHECK-NEXT:    ori 4, 4, 37253
@@ -20,8 +20,8 @@ define i32 @fold_srem_positive_odd(i32 %x) {
 }
 
 
-define i32 @fold_srem_positive_even(i32 %x) {
-; CHECK-LABEL: fold_srem_positive_even:
+define i32 @lower_srem_positive_even(i32 %x) {
+; CHECK-LABEL: lower_srem_positive_even:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    lis 4, 15827
 ; CHECK-NEXT:    ori 4, 4, 36849
@@ -37,8 +37,8 @@ define i32 @fold_srem_positive_even(i32 %x) {
 }
 
 
-define i32 @fold_srem_negative_odd(i32 %x) {
-; CHECK-LABEL: fold_srem_negative_odd:
+define i32 @lower_srem_negative_odd(i32 %x) {
+; CHECK-LABEL: lower_srem_negative_odd:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    lis 4, -23206
 ; CHECK-NEXT:    ori 4, 4, 65445
@@ -54,8 +54,8 @@ define i32 @fold_srem_negative_odd(i32 %x) {
 }
 
 
-define i32 @fold_srem_negative_even(i32 %x) {
-; CHECK-LABEL: fold_srem_negative_even:
+define i32 @lower_srem_negative_even(i32 %x) {
+; CHECK-LABEL: lower_srem_negative_even:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    lis 4, -731
 ; CHECK-NEXT:    ori 4, 4, 62439
@@ -71,7 +71,7 @@ define i32 @fold_srem_negative_even(i32 %x) {
 }
 
 
-; Don't fold if we can combine srem with sdiv.
+; Don't lower if we can combine srem with sdiv.
 define i32 @combine_srem_sdiv(i32 %x) {
 ; CHECK-LABEL: combine_srem_sdiv:
 ; CHECK:       # %bb.0:
@@ -92,9 +92,9 @@ define i32 @combine_srem_sdiv(i32 %x) {
   ret i32 %3
 }
 
-; Don't fold for divisors that are a power of two.
-define i32 @dont_fold_srem_power_of_two(i32 %x) {
-; CHECK-LABEL: dont_fold_srem_power_of_two:
+; Don't lower for divisors that are a power of two.
+define i32 @dont_lower_srem_power_of_two(i32 %x) {
+; CHECK-LABEL: dont_lower_srem_power_of_two:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    srawi 4, 3, 6
 ; CHECK-NEXT:    addze 4, 4
@@ -105,9 +105,9 @@ define i32 @dont_fold_srem_power_of_two(i32 %x) {
   ret i32 %1
 }
 
-; Don't fold if the divisor is one.
-define i32 @dont_fold_srem_one(i32 %x) {
-; CHECK-LABEL: dont_fold_srem_one:
+; Don't lower if the divisor is one.
+define i32 @dont_lower_srem_one(i32 %x) {
+; CHECK-LABEL: dont_lower_srem_one:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    li 3, 0
 ; CHECK-NEXT:    blr
@@ -115,9 +115,9 @@ define i32 @dont_fold_srem_one(i32 %x) {
   ret i32 %1
 }
 
-; Don't fold if the divisor is 2^31.
-define i32 @dont_fold_srem_i32_smax(i32 %x) {
-; CHECK-LABEL: dont_fold_srem_i32_smax:
+; Don't lower if the divisor is 2^31.
+define i32 @dont_lower_srem_i32_smax(i32 %x) {
+; CHECK-LABEL: dont_lower_srem_i32_smax:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    srawi 4, 3, 31
 ; CHECK-NEXT:    addze 4, 4
@@ -128,9 +128,9 @@ define i32 @dont_fold_srem_i32_smax(i32 %x) {
   ret i32 %1
 }
 
-; Don't fold i64 srem
-define i64 @dont_fold_srem_i64(i64 %x) {
-; CHECK-LABEL: dont_fold_srem_i64:
+; Don't lower i64 srem
+define i64 @dont_lower_srem_i64(i64 %x) {
+; CHECK-LABEL: dont_lower_srem_i64:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    mflr 0
 ; CHECK-NEXT:    stw 0, 4(1)
@@ -146,4 +146,120 @@ define i64 @dont_fold_srem_i64(i64 %x) {
 ; CHECK-NEXT:    blr
   %1 = srem i64 %x, 98
   ret i64 %1
+}
+
+@.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+
+declare dso_local i32 @printf(i8* nocapture readonly, ...) local_unnamed_addr #1
+
+define void @srem_loop(i32 %x) {
+; CHECK64-LABEL: srem_loop:
+; CHECK64:       # %bb.0: # %entry
+; CHECK64-NEXT:    mflr 0
+; CHECK64-NEXT:    stw 0, 4(1)
+; CHECK64-NEXT:    stwu 1, -32(1)
+; CHECK64-NEXT:    .cfi_def_cfa_offset 32
+; CHECK64-NEXT:    .cfi_offset lr, 4
+; CHECK64-NEXT:    .cfi_offset r27, -20
+; CHECK64-NEXT:    .cfi_offset r28, -16
+; CHECK64-NEXT:    .cfi_offset r29, -12
+; CHECK64-NEXT:    .cfi_offset r30, -8
+; CHECK64-NEXT:    lis 4, -21386
+; CHECK64-NEXT:    lis 5, .L.str@ha
+; CHECK64-NEXT:    stw 27, 12(1) # 4-byte Folded Spill
+; CHECK64-NEXT:    ori 27, 4, 37253
+; CHECK64-NEXT:    stw 28, 16(1) # 4-byte Folded Spill
+; CHECK64-NEXT:    la 28, .L.str@l(5)
+; CHECK64-NEXT:    stw 29, 20(1) # 4-byte Folded Spill
+; CHECK64-NEXT:    li 29, 0
+; CHECK64-NEXT:    stw 30, 24(1) # 4-byte Folded Spill
+; CHECK64-NEXT:    mr 30, 3
+; CHECK64-NEXT:    li 3, 1
+; CHECK64-NEXT:  .LBB9_1: # %loop
+; CHECK64-NEXT:    #
+; CHECK64-NEXT:    mulhw 4, 3, 27
+; CHECK64-NEXT:    crxor 6, 6, 6
+; CHECK64-NEXT:    add 4, 4, 3
+; CHECK64-NEXT:    srwi 5, 4, 31
+; CHECK64-NEXT:    srawi 4, 4, 6
+; CHECK64-NEXT:    add 4, 4, 5
+; CHECK64-NEXT:    mulli 4, 4, 95
+; CHECK64-NEXT:    subf 3, 4, 3
+; CHECK64-NEXT:    add 29, 3, 29
+; CHECK64-NEXT:    mr 3, 28
+; CHECK64-NEXT:    mr 4, 29
+; CHECK64-NEXT:    bl printf
+; CHECK64-NEXT:    cmplw 3, 30
+; CHECK64-NEXT:    blt 0, .LBB9_1
+; CHECK64-NEXT:  # %bb.2: # %afterloop
+; CHECK64-NEXT:    lwz 30, 24(1) # 4-byte Folded Reload
+; CHECK64-NEXT:    lwz 29, 20(1) # 4-byte Folded Reload
+; CHECK64-NEXT:    lwz 28, 16(1) # 4-byte Folded Reload
+; CHECK64-NEXT:    lwz 27, 12(1) # 4-byte Folded Reload
+; CHECK64-NEXT:    lwz 0, 36(1)
+; CHECK64-NEXT:    addi 1, 1, 32
+; CHECK64-NEXT:    mtlr 0
+; CHECK64-NEXT:    blr
+;
+; CHECK32-LABEL: srem_loop:
+; CHECK32:       # %bb.0: # %entry
+; CHECK32-NEXT:    mflr 0
+; CHECK32-NEXT:    stw 0, 4(1)
+; CHECK32-NEXT:    stwu 1, -32(1)
+; CHECK32-NEXT:    .cfi_def_cfa_offset 32
+; CHECK32-NEXT:    .cfi_offset lr, 4
+; CHECK32-NEXT:    .cfi_offset r27, -20
+; CHECK32-NEXT:    .cfi_offset r28, -16
+; CHECK32-NEXT:    .cfi_offset r29, -12
+; CHECK32-NEXT:    .cfi_offset r30, -8
+; CHECK32-NEXT:    lis 4, -21386
+; CHECK32-NEXT:    lis 5, .L.str@ha
+; CHECK32-NEXT:    stw 27, 12(1) # 4-byte Folded Spill
+; CHECK32-NEXT:    stw 28, 16(1) # 4-byte Folded Spill
+; CHECK32-NEXT:    stw 29, 20(1) # 4-byte Folded Spill
+; CHECK32-NEXT:    stw 30, 24(1) # 4-byte Folded Spill
+; CHECK32-NEXT:    mr 30, 3
+; CHECK32-NEXT:    li 29, 0
+; CHECK32-NEXT:    li 3, 1
+; CHECK32-NEXT:    ori 27, 4, 37253
+; CHECK32-NEXT:    la 28, .L.str@l(5)
+; CHECK32-NEXT:  .LBB9_1: # %loop
+; CHECK32-NEXT:    #
+; CHECK32-NEXT:    mulhw 4, 3, 27
+; CHECK32-NEXT:    add 4, 4, 3
+; CHECK32-NEXT:    srwi 5, 4, 31
+; CHECK32-NEXT:    srawi 4, 4, 6
+; CHECK32-NEXT:    add 4, 4, 5
+; CHECK32-NEXT:    mulli 4, 4, 95
+; CHECK32-NEXT:    subf 3, 4, 3
+; CHECK32-NEXT:    add 29, 3, 29
+; CHECK32-NEXT:    crxor 6, 6, 6
+; CHECK32-NEXT:    mr 3, 28
+; CHECK32-NEXT:    mr 4, 29
+; CHECK32-NEXT:    bl printf
+; CHECK32-NEXT:    cmplw 3, 30
+; CHECK32-NEXT:    blt 0, .LBB9_1
+; CHECK32-NEXT:  # %bb.2: # %afterloop
+; CHECK32-NEXT:    lwz 30, 24(1) # 4-byte Folded Reload
+; CHECK32-NEXT:    lwz 29, 20(1) # 4-byte Folded Reload
+; CHECK32-NEXT:    lwz 28, 16(1) # 4-byte Folded Reload
+; CHECK32-NEXT:    lwz 27, 12(1) # 4-byte Folded Reload
+; CHECK32-NEXT:    lwz 0, 36(1)
+; CHECK32-NEXT:    addi 1, 1, 32
+; CHECK32-NEXT:    mtlr 0
+; CHECK32-NEXT:    blr
+entry:
+  %0 = add i32 0, 0
+  br label %loop
+loop:
+  %1 = phi i32 [ 1, %entry ], [ %5, %loop ]
+  %2 = phi i32 [%0, %entry], [%4, %loop]
+  %3 = srem i32 %1, 95
+  %4 = add i32 %3, %2
+  %5 = tail call i32 (i8*, ...) @printf(i8* nonnull dereferenceable(1) getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %4)
+  %6 = icmp ult i32 %5, %x
+  br i1 %6, label %loop, label %afterloop
+
+afterloop:
+  ret void
 }

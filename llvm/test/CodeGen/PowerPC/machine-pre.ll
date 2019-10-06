@@ -58,16 +58,21 @@ define dso_local signext i32 @foo(i32 signext %x, i32 signext %y) nounwind {
 ; CHECK-P9-LABEL: foo:
 ; CHECK-P9:       # %bb.0: # %entry
 ; CHECK-P9-NEXT:    mflr r0
+; CHECK-P9-NEXT:    std r26, -48(r1) # 8-byte Folded Spill
 ; CHECK-P9-NEXT:    std r27, -40(r1) # 8-byte Folded Spill
 ; CHECK-P9-NEXT:    std r28, -32(r1) # 8-byte Folded Spill
 ; CHECK-P9-NEXT:    std r29, -24(r1) # 8-byte Folded Spill
 ; CHECK-P9-NEXT:    std r30, -16(r1) # 8-byte Folded Spill
 ; CHECK-P9-NEXT:    std r0, 16(r1)
 ; CHECK-P9-NEXT:    stdu r1, -80(r1)
-; CHECK-P9-NEXT:    mr r30, r4
 ; CHECK-P9-NEXT:    mr r29, r3
 ; CHECK-P9-NEXT:    lis r3, 21845
+; CHECK-P9-NEXT:    ori r3, r3, 21845
+; CHECK-P9-NEXT:    sldi r3, r3, 32
+; CHECK-P9-NEXT:    mr r30, r4
 ; CHECK-P9-NEXT:    add r28, r30, r29
+; CHECK-P9-NEXT:    li r26, 3
+; CHECK-P9-NEXT:    oris r3, r3, 21845
 ; CHECK-P9-NEXT:    ori r27, r3, 21846
 ; CHECK-P9-NEXT:    b .LBB1_4
 ; CHECK-P9-NEXT:    .p2align 4
@@ -93,12 +98,9 @@ define dso_local signext i32 @foo(i32 signext %x, i32 signext %y) nounwind {
 ; CHECK-P9-NEXT:    mr r30, r3
 ; CHECK-P9-NEXT:    extsw r3, r28
 ; CHECK-P9-NEXT:    mulld r4, r3, r27
-; CHECK-P9-NEXT:    rldicl r5, r4, 1, 63
-; CHECK-P9-NEXT:    rldicl r4, r4, 32, 32
-; CHECK-P9-NEXT:    add r4, r4, r5
-; CHECK-P9-NEXT:    slwi r5, r4, 1
-; CHECK-P9-NEXT:    add r4, r4, r5
-; CHECK-P9-NEXT:    subf r3, r4, r3
+; CHECK-P9-NEXT:    rlwinm r3, r3, 2, 30, 30
+; CHECK-P9-NEXT:    mulhdu r4, r4, r26
+; CHECK-P9-NEXT:    subf r3, r3, r4
 ; CHECK-P9-NEXT:    cmplwi r3, 1
 ; CHECK-P9-NEXT:    beq cr0, .LBB1_1
 ; CHECK-P9-NEXT:  # %bb.5: # %while.cond
@@ -139,6 +141,7 @@ define dso_local signext i32 @foo(i32 signext %x, i32 signext %y) nounwind {
 ; CHECK-P9-NEXT:    ld r29, -24(r1) # 8-byte Folded Reload
 ; CHECK-P9-NEXT:    ld r28, -32(r1) # 8-byte Folded Reload
 ; CHECK-P9-NEXT:    ld r27, -40(r1) # 8-byte Folded Reload
+; CHECK-P9-NEXT:    ld r26, -48(r1) # 8-byte Folded Reload
 ; CHECK-P9-NEXT:    blr
 entry:
   %add = add nsw i32 %y, %x
