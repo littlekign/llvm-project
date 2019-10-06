@@ -11,66 +11,72 @@
 define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
 ; P9LE-LABEL: fold_srem_vec_1:
 ; P9LE:       # %bb.0:
+; P9LE-NEXT:    lis r5, 689
 ; P9LE-NEXT:    li r3, 0
+; P9LE-NEXT:    ori r5, r5, 55878
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    lis r5, -21386
-; P9LE-NEXT:    ori r5, r5, 37253
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    add r4, r5, r4
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    lis r5, 31710
-; P9LE-NEXT:    mulli r4, r4, 95
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    oris r5, r5, 4139
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    ori r5, r5, 7589
+; P9LE-NEXT:    andi. r4, r4, 94
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 95
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    lis r5, 528
+; P9LE-NEXT:    ori r5, r5, 33825
+; P9LE-NEXT:    sldi r5, r5, 32
 ; P9LE-NEXT:    subf r3, r4, r3
+; P9LE-NEXT:    oris r5, r5, 2114
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 2
+; P9LE-NEXT:    ori r5, r5, 4229
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    ori r5, r5, 63421
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    subf r4, r4, r5
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    lis r5, 21399
-; P9LE-NEXT:    mulli r4, r4, -124
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 124
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 123
 ; P9LE-NEXT:    subf r3, r4, r3
+; P9LE-NEXT:    lis r5, 668
 ; P9LE-NEXT:    xxswapd v3, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 4
+; P9LE-NEXT:    ori r5, r5, 48148
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    oris r5, r5, 58848
+; P9LE-NEXT:    ori r5, r5, 42800
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    ori r5, r5, 33437
-; P9LE-NEXT:    mulld r4, r4, r5
-; P9LE-NEXT:    rldicl r5, r4, 1, 63
-; P9LE-NEXT:    rldicl r4, r4, 32, 32
-; P9LE-NEXT:    srawi r4, r4, 5
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    lis r5, -16728
-; P9LE-NEXT:    mulli r4, r4, 98
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 98
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 97
 ; P9LE-NEXT:    subf r3, r4, r3
+; P9LE-NEXT:    lis r5, 65
 ; P9LE-NEXT:    xxswapd v4, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 6
-; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    ori r5, r5, 63249
-; P9LE-NEXT:    mulld r4, r4, r5
-; P9LE-NEXT:    rldicl r5, r4, 1, 63
-; P9LE-NEXT:    rldicl r4, r4, 32, 32
-; P9LE-NEXT:    srawi r4, r4, 8
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    mulli r4, r4, -1003
-; P9LE-NEXT:    subf r3, r4, r3
+; P9LE-NEXT:    ori r5, r5, 22280
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    oris r5, r5, 61158
+; P9LE-NEXT:    ori r5, r5, 14506
 ; P9LE-NEXT:    vmrglh v3, v4, v3
+; P9LE-NEXT:    vextuhrx r3, r3, v2
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 1003
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 1002
+; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v4, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    xxswapd v2, vs0
@@ -80,203 +86,219 @@ define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
 ;
 ; P9BE-LABEL: fold_srem_vec_1:
 ; P9BE:       # %bb.0:
-; P9BE-NEXT:    li r3, 2
-; P9BE-NEXT:    vextuhlx r3, r3, v2
-; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    lis r4, 31710
-; P9BE-NEXT:    ori r4, r4, 63421
-; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    subf r4, r3, r4
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 6
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, -124
-; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, -21386
-; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    mtvsrd v3, r3
-; P9BE-NEXT:    li r3, 0
-; P9BE-NEXT:    vextuhlx r3, r3, v2
-; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 37253
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    add r4, r4, r3
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 6
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 95
-; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, -16728
-; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    mtvsrd v4, r3
+; P9BE-NEXT:    lis r5, 65
 ; P9BE-NEXT:    li r3, 6
+; P9BE-NEXT:    ori r5, r5, 22280
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    sldi r5, r5, 32
 ; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    oris r5, r5, 61158
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 63249
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r5, r4, 1, 63
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    srawi r4, r4, 8
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, -1003
+; P9BE-NEXT:    ori r5, r5, 14506
+; P9BE-NEXT:    andi. r4, r4, 1002
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 1003
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    lis r5, 668
+; P9BE-NEXT:    ori r5, r5, 48148
+; P9BE-NEXT:    sldi r5, r5, 32
 ; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, 21399
+; P9BE-NEXT:    oris r5, r5, 58848
 ; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    vmrghh v3, v4, v3
-; P9BE-NEXT:    mtvsrd v4, r3
+; P9BE-NEXT:    ori r5, r5, 42800
+; P9BE-NEXT:    mtvsrd v3, r3
 ; P9BE-NEXT:    li r3, 4
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 33437
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r5, r4, 1, 63
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    srawi r4, r4, 5
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 98
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 98
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 97
+; P9BE-NEXT:    subf r3, r4, r3
+; P9BE-NEXT:    sldi r3, r3, 48
+; P9BE-NEXT:    lis r5, 528
+; P9BE-NEXT:    ori r5, r5, 33825
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    oris r5, r5, 2114
+; P9BE-NEXT:    ori r5, r5, 4229
+; P9BE-NEXT:    mtvsrd v4, r3
+; P9BE-NEXT:    li r3, 2
+; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
+; P9BE-NEXT:    extsw r3, r3
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 124
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 123
+; P9BE-NEXT:    subf r3, r4, r3
+; P9BE-NEXT:    sldi r3, r3, 48
+; P9BE-NEXT:    lis r5, 689
+; P9BE-NEXT:    vmrghh v3, v4, v3
+; P9BE-NEXT:    mtvsrd v4, r3
+; P9BE-NEXT:    li r3, 0
+; P9BE-NEXT:    ori r5, r5, 55878
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    oris r5, r5, 4139
+; P9BE-NEXT:    ori r5, r5, 7589
+; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
+; P9BE-NEXT:    extsw r3, r3
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 95
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 94
 ; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v2, r3
 ; P9BE-NEXT:    vmrghh v2, v2, v4
-; P9BE-NEXT:    vmrghw v2, v3, v2
+; P9BE-NEXT:    vmrghw v2, v2, v3
 ; P9BE-NEXT:    blr
 ;
 ; P8LE-LABEL: fold_srem_vec_1:
 ; P8LE:       # %bb.0:
 ; P8LE-NEXT:    xxswapd vs0, v2
-; P8LE-NEXT:    lis r4, 21399
-; P8LE-NEXT:    lis r9, -16728
-; P8LE-NEXT:    lis r11, -21386
-; P8LE-NEXT:    std r30, -16(r1) # 8-byte Folded Spill
-; P8LE-NEXT:    ori r4, r4, 33437
-; P8LE-NEXT:    ori r9, r9, 63249
-; P8LE-NEXT:    ori r11, r11, 37253
-; P8LE-NEXT:    mfvsrd r5, f0
-; P8LE-NEXT:    rldicl r3, r5, 32, 48
-; P8LE-NEXT:    rldicl r6, r5, 16, 48
-; P8LE-NEXT:    clrldi r7, r5, 48
-; P8LE-NEXT:    extsh r8, r3
-; P8LE-NEXT:    extsh r10, r6
-; P8LE-NEXT:    rldicl r5, r5, 48, 48
+; P8LE-NEXT:    lis r3, 689
+; P8LE-NEXT:    lis r4, 528
+; P8LE-NEXT:    lis r5, 668
+; P8LE-NEXT:    lis r6, 65
+; P8LE-NEXT:    li r11, 95
+; P8LE-NEXT:    ori r3, r3, 55878
+; P8LE-NEXT:    ori r4, r4, 33825
+; P8LE-NEXT:    ori r5, r5, 48148
+; P8LE-NEXT:    ori r6, r6, 22280
+; P8LE-NEXT:    sldi r3, r3, 32
+; P8LE-NEXT:    sldi r4, r4, 32
+; P8LE-NEXT:    mfvsrd r7, f0
+; P8LE-NEXT:    oris r3, r3, 4139
+; P8LE-NEXT:    sldi r5, r5, 32
+; P8LE-NEXT:    oris r4, r4, 2114
+; P8LE-NEXT:    ori r3, r3, 7589
+; P8LE-NEXT:    sldi r6, r6, 32
+; P8LE-NEXT:    oris r5, r5, 58848
+; P8LE-NEXT:    ori r4, r4, 4229
+; P8LE-NEXT:    clrldi r8, r7, 48
+; P8LE-NEXT:    rldicl r9, r7, 48, 48
+; P8LE-NEXT:    oris r6, r6, 61158
+; P8LE-NEXT:    ori r5, r5, 42800
+; P8LE-NEXT:    extsh r8, r8
+; P8LE-NEXT:    rldicl r10, r7, 32, 48
+; P8LE-NEXT:    extsh r9, r9
+; P8LE-NEXT:    ori r6, r6, 14506
 ; P8LE-NEXT:    extsw r8, r8
-; P8LE-NEXT:    extsh r12, r7
+; P8LE-NEXT:    rldicl r7, r7, 16, 48
+; P8LE-NEXT:    extsh r10, r10
+; P8LE-NEXT:    extsw r9, r9
+; P8LE-NEXT:    mulld r3, r8, r3
+; P8LE-NEXT:    extsh r7, r7
 ; P8LE-NEXT:    extsw r10, r10
-; P8LE-NEXT:    mulld r4, r8, r4
-; P8LE-NEXT:    lis r8, 31710
-; P8LE-NEXT:    extsh r0, r5
-; P8LE-NEXT:    extsw r12, r12
-; P8LE-NEXT:    mulld r9, r10, r9
-; P8LE-NEXT:    ori r8, r8, 63421
-; P8LE-NEXT:    extsw r10, r0
-; P8LE-NEXT:    mulld r11, r12, r11
-; P8LE-NEXT:    mulld r8, r10, r8
-; P8LE-NEXT:    rldicl r0, r4, 1, 63
-; P8LE-NEXT:    rldicl r4, r4, 32, 32
-; P8LE-NEXT:    rldicl r30, r9, 1, 63
-; P8LE-NEXT:    rldicl r9, r9, 32, 32
-; P8LE-NEXT:    rldicl r11, r11, 32, 32
-; P8LE-NEXT:    rldicl r8, r8, 32, 32
-; P8LE-NEXT:    add r11, r11, r12
-; P8LE-NEXT:    srawi r4, r4, 5
-; P8LE-NEXT:    subf r8, r10, r8
-; P8LE-NEXT:    srawi r9, r9, 8
-; P8LE-NEXT:    srwi r10, r11, 31
-; P8LE-NEXT:    add r4, r4, r0
-; P8LE-NEXT:    srawi r11, r11, 6
-; P8LE-NEXT:    add r9, r9, r30
-; P8LE-NEXT:    ld r30, -16(r1) # 8-byte Folded Reload
-; P8LE-NEXT:    add r10, r11, r10
-; P8LE-NEXT:    srwi r11, r8, 31
-; P8LE-NEXT:    srawi r8, r8, 6
-; P8LE-NEXT:    mulli r4, r4, 98
-; P8LE-NEXT:    mulli r9, r9, -1003
-; P8LE-NEXT:    add r8, r8, r11
-; P8LE-NEXT:    mulli r10, r10, 95
-; P8LE-NEXT:    mulli r8, r8, -124
-; P8LE-NEXT:    subf r3, r4, r3
-; P8LE-NEXT:    subf r4, r9, r6
+; P8LE-NEXT:    mulld r4, r9, r4
+; P8LE-NEXT:    extsw r7, r7
+; P8LE-NEXT:    mulld r5, r10, r5
+; P8LE-NEXT:    mulld r6, r7, r6
+; P8LE-NEXT:    srawi r8, r8, 31
+; P8LE-NEXT:    srawi r9, r9, 31
+; P8LE-NEXT:    mulhdu r3, r3, r11
+; P8LE-NEXT:    li r11, 124
+; P8LE-NEXT:    andi. r8, r8, 94
+; P8LE-NEXT:    andi. r9, r9, 123
+; P8LE-NEXT:    mulhdu r4, r4, r11
+; P8LE-NEXT:    li r11, 98
+; P8LE-NEXT:    mulhdu r5, r5, r11
+; P8LE-NEXT:    li r11, 1003
+; P8LE-NEXT:    mulhdu r6, r6, r11
+; P8LE-NEXT:    subf r3, r8, r3
+; P8LE-NEXT:    srawi r8, r10, 31
 ; P8LE-NEXT:    mtvsrd f0, r3
-; P8LE-NEXT:    subf r3, r10, r7
+; P8LE-NEXT:    srawi r3, r7, 31
+; P8LE-NEXT:    andi. r7, r8, 97
+; P8LE-NEXT:    subf r4, r9, r4
+; P8LE-NEXT:    andi. r3, r3, 1002
+; P8LE-NEXT:    subf r5, r7, r5
 ; P8LE-NEXT:    mtvsrd f1, r4
-; P8LE-NEXT:    subf r4, r8, r5
-; P8LE-NEXT:    mtvsrd f2, r3
+; P8LE-NEXT:    subf r3, r3, r6
+; P8LE-NEXT:    mtvsrd f2, r5
 ; P8LE-NEXT:    xxswapd v2, vs0
-; P8LE-NEXT:    mtvsrd f3, r4
+; P8LE-NEXT:    mtvsrd f3, r3
 ; P8LE-NEXT:    xxswapd v3, vs1
 ; P8LE-NEXT:    xxswapd v4, vs2
 ; P8LE-NEXT:    xxswapd v5, vs3
 ; P8LE-NEXT:    vmrglh v2, v3, v2
 ; P8LE-NEXT:    vmrglh v3, v5, v4
-; P8LE-NEXT:    vmrglw v2, v2, v3
+; P8LE-NEXT:    vmrglw v2, v3, v2
 ; P8LE-NEXT:    blr
 ;
 ; P8BE-LABEL: fold_srem_vec_1:
 ; P8BE:       # %bb.0:
-; P8BE-NEXT:    mfvsrd r4, v2
-; P8BE-NEXT:    lis r3, -16728
-; P8BE-NEXT:    lis r9, 31710
-; P8BE-NEXT:    lis r8, 21399
-; P8BE-NEXT:    lis r10, -21386
-; P8BE-NEXT:    ori r3, r3, 63249
-; P8BE-NEXT:    ori r9, r9, 63421
-; P8BE-NEXT:    ori r8, r8, 33437
-; P8BE-NEXT:    ori r10, r10, 37253
-; P8BE-NEXT:    clrldi r5, r4, 48
-; P8BE-NEXT:    rldicl r7, r4, 32, 48
-; P8BE-NEXT:    rldicl r6, r4, 48, 48
-; P8BE-NEXT:    rldicl r4, r4, 16, 48
-; P8BE-NEXT:    extsh r5, r5
+; P8BE-NEXT:    lis r3, 65
+; P8BE-NEXT:    mfvsrd r7, v2
+; P8BE-NEXT:    lis r4, 668
+; P8BE-NEXT:    lis r5, 528
+; P8BE-NEXT:    lis r6, 689
+; P8BE-NEXT:    li r11, 1003
+; P8BE-NEXT:    ori r3, r3, 22280
+; P8BE-NEXT:    ori r4, r4, 48148
+; P8BE-NEXT:    ori r5, r5, 33825
+; P8BE-NEXT:    ori r6, r6, 55878
+; P8BE-NEXT:    li r12, 98
+; P8BE-NEXT:    sldi r3, r3, 32
+; P8BE-NEXT:    clrldi r8, r7, 48
+; P8BE-NEXT:    oris r3, r3, 61158
+; P8BE-NEXT:    extsh r8, r8
+; P8BE-NEXT:    sldi r4, r4, 32
+; P8BE-NEXT:    rldicl r9, r7, 48, 48
+; P8BE-NEXT:    ori r3, r3, 14506
+; P8BE-NEXT:    extsw r8, r8
+; P8BE-NEXT:    sldi r5, r5, 32
+; P8BE-NEXT:    sldi r6, r6, 32
+; P8BE-NEXT:    oris r4, r4, 58848
+; P8BE-NEXT:    extsh r9, r9
+; P8BE-NEXT:    rldicl r10, r7, 32, 48
+; P8BE-NEXT:    rldicl r7, r7, 16, 48
+; P8BE-NEXT:    oris r5, r5, 2114
+; P8BE-NEXT:    oris r6, r6, 4139
+; P8BE-NEXT:    ori r4, r4, 42800
+; P8BE-NEXT:    extsw r9, r9
+; P8BE-NEXT:    mulld r3, r8, r3
+; P8BE-NEXT:    extsh r10, r10
 ; P8BE-NEXT:    extsh r7, r7
-; P8BE-NEXT:    extsh r6, r6
-; P8BE-NEXT:    extsw r5, r5
-; P8BE-NEXT:    extsh r4, r4
+; P8BE-NEXT:    ori r5, r5, 4229
+; P8BE-NEXT:    ori r6, r6, 7589
+; P8BE-NEXT:    extsw r10, r10
 ; P8BE-NEXT:    extsw r7, r7
-; P8BE-NEXT:    extsw r6, r6
-; P8BE-NEXT:    mulld r3, r5, r3
-; P8BE-NEXT:    extsw r4, r4
-; P8BE-NEXT:    mulld r9, r7, r9
-; P8BE-NEXT:    mulld r8, r6, r8
-; P8BE-NEXT:    mulld r10, r4, r10
-; P8BE-NEXT:    rldicl r11, r3, 1, 63
-; P8BE-NEXT:    rldicl r3, r3, 32, 32
-; P8BE-NEXT:    rldicl r9, r9, 32, 32
-; P8BE-NEXT:    rldicl r12, r8, 1, 63
-; P8BE-NEXT:    rldicl r8, r8, 32, 32
-; P8BE-NEXT:    rldicl r10, r10, 32, 32
-; P8BE-NEXT:    subf r9, r7, r9
-; P8BE-NEXT:    srawi r3, r3, 8
-; P8BE-NEXT:    srawi r8, r8, 5
-; P8BE-NEXT:    add r10, r10, r4
-; P8BE-NEXT:    add r3, r3, r11
-; P8BE-NEXT:    srwi r11, r9, 31
-; P8BE-NEXT:    add r8, r8, r12
-; P8BE-NEXT:    srawi r9, r9, 6
-; P8BE-NEXT:    mulli r3, r3, -1003
-; P8BE-NEXT:    add r9, r9, r11
-; P8BE-NEXT:    srwi r11, r10, 31
-; P8BE-NEXT:    srawi r10, r10, 6
-; P8BE-NEXT:    mulli r8, r8, 98
-; P8BE-NEXT:    add r10, r10, r11
-; P8BE-NEXT:    mulli r9, r9, -124
-; P8BE-NEXT:    mulli r10, r10, 95
-; P8BE-NEXT:    subf r3, r3, r5
+; P8BE-NEXT:    mulld r4, r9, r4
+; P8BE-NEXT:    mulld r5, r10, r5
+; P8BE-NEXT:    mulld r6, r7, r6
+; P8BE-NEXT:    srawi r8, r8, 31
+; P8BE-NEXT:    mulhdu r3, r3, r11
+; P8BE-NEXT:    li r11, 124
+; P8BE-NEXT:    andi. r8, r8, 1002
+; P8BE-NEXT:    srawi r9, r9, 31
+; P8BE-NEXT:    srawi r10, r10, 31
+; P8BE-NEXT:    mulhdu r4, r4, r12
+; P8BE-NEXT:    li r12, 95
+; P8BE-NEXT:    mulhdu r5, r5, r11
+; P8BE-NEXT:    mulhdu r6, r6, r12
+; P8BE-NEXT:    subf r3, r8, r3
+; P8BE-NEXT:    srawi r7, r7, 31
+; P8BE-NEXT:    andi. r8, r9, 97
 ; P8BE-NEXT:    sldi r3, r3, 48
-; P8BE-NEXT:    subf r5, r8, r6
+; P8BE-NEXT:    subf r4, r8, r4
+; P8BE-NEXT:    andi. r8, r10, 123
 ; P8BE-NEXT:    mtvsrd v2, r3
-; P8BE-NEXT:    subf r6, r9, r7
-; P8BE-NEXT:    sldi r3, r5, 48
-; P8BE-NEXT:    subf r4, r10, r4
-; P8BE-NEXT:    mtvsrd v3, r3
-; P8BE-NEXT:    sldi r3, r6, 48
+; P8BE-NEXT:    andi. r3, r7, 94
+; P8BE-NEXT:    subf r5, r8, r5
+; P8BE-NEXT:    subf r3, r3, r6
 ; P8BE-NEXT:    sldi r4, r4, 48
-; P8BE-NEXT:    mtvsrd v4, r3
-; P8BE-NEXT:    mtvsrd v5, r4
+; P8BE-NEXT:    sldi r5, r5, 48
+; P8BE-NEXT:    sldi r3, r3, 48
+; P8BE-NEXT:    mtvsrd v3, r4
+; P8BE-NEXT:    mtvsrd v4, r5
+; P8BE-NEXT:    mtvsrd v5, r3
 ; P8BE-NEXT:    vmrghh v2, v3, v2
 ; P8BE-NEXT:    vmrghh v3, v5, v4
 ; P8BE-NEXT:    vmrghw v2, v3, v2
@@ -288,60 +310,52 @@ define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
 define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
 ; P9LE-LABEL: fold_srem_vec_2:
 ; P9LE:       # %bb.0:
+; P9LE-NEXT:    lis r5, 689
 ; P9LE-NEXT:    li r3, 0
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    lis r5, -21386
-; P9LE-NEXT:    ori r5, r5, 37253
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r6, r4, r5
-; P9LE-NEXT:    rldicl r6, r6, 32, 32
-; P9LE-NEXT:    add r4, r6, r4
-; P9LE-NEXT:    srwi r6, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r6
-; P9LE-NEXT:    mulli r4, r4, 95
+; P9LE-NEXT:    ori r5, r5, 55878
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    oris r5, r5, 4139
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    li r6, 95
+; P9LE-NEXT:    ori r5, r5, 7589
+; P9LE-NEXT:    andi. r4, r4, 94
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    mulhdu r3, r3, r6
 ; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 2
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r6, r4, r5
-; P9LE-NEXT:    rldicl r6, r6, 32, 32
-; P9LE-NEXT:    add r4, r6, r4
-; P9LE-NEXT:    srwi r6, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r6
-; P9LE-NEXT:    mulli r4, r4, 95
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    mulhdu r3, r3, r6
+; P9LE-NEXT:    andi. r4, r4, 94
 ; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v3, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 4
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r6, r4, r5
-; P9LE-NEXT:    rldicl r6, r6, 32, 32
-; P9LE-NEXT:    add r4, r6, r4
-; P9LE-NEXT:    srwi r6, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r6
-; P9LE-NEXT:    mulli r4, r4, 95
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    mulhdu r3, r3, r6
+; P9LE-NEXT:    andi. r4, r4, 94
 ; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v4, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 6
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    add r4, r5, r4
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    mulli r4, r4, 95
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    mulhdu r3, r3, r6
+; P9LE-NEXT:    andi. r4, r4, 94
 ; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    vmrglh v3, v4, v3
 ; P9LE-NEXT:    xxswapd v4, vs0
@@ -353,62 +367,54 @@ define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
 ;
 ; P9BE-LABEL: fold_srem_vec_2:
 ; P9BE:       # %bb.0:
+; P9BE-NEXT:    lis r5, 689
 ; P9BE-NEXT:    li r3, 6
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    ori r5, r5, 55878
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    oris r5, r5, 4139
 ; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    lis r4, -21386
-; P9BE-NEXT:    ori r4, r4, 37253
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r5, r3, r4
-; P9BE-NEXT:    rldicl r5, r5, 32, 32
-; P9BE-NEXT:    add r5, r5, r3
-; P9BE-NEXT:    srwi r6, r5, 31
-; P9BE-NEXT:    srawi r5, r5, 6
-; P9BE-NEXT:    add r5, r5, r6
-; P9BE-NEXT:    mulli r5, r5, 95
-; P9BE-NEXT:    subf r3, r5, r3
+; P9BE-NEXT:    li r6, 95
+; P9BE-NEXT:    ori r5, r5, 7589
+; P9BE-NEXT:    andi. r4, r4, 94
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    mulhdu r3, r3, r6
+; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v3, r3
 ; P9BE-NEXT:    li r3, 4
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r5, r3, r4
-; P9BE-NEXT:    rldicl r5, r5, 32, 32
-; P9BE-NEXT:    add r5, r5, r3
-; P9BE-NEXT:    srwi r6, r5, 31
-; P9BE-NEXT:    srawi r5, r5, 6
-; P9BE-NEXT:    add r5, r5, r6
-; P9BE-NEXT:    mulli r5, r5, 95
-; P9BE-NEXT:    subf r3, r5, r3
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    mulhdu r3, r3, r6
+; P9BE-NEXT:    andi. r4, r4, 94
+; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v4, r3
 ; P9BE-NEXT:    li r3, 2
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r5, r3, r4
-; P9BE-NEXT:    rldicl r5, r5, 32, 32
-; P9BE-NEXT:    add r5, r5, r3
-; P9BE-NEXT:    srwi r6, r5, 31
-; P9BE-NEXT:    srawi r5, r5, 6
-; P9BE-NEXT:    add r5, r5, r6
-; P9BE-NEXT:    mulli r5, r5, 95
-; P9BE-NEXT:    subf r3, r5, r3
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    mulhdu r3, r3, r6
+; P9BE-NEXT:    andi. r4, r4, 94
+; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    vmrghh v3, v4, v3
 ; P9BE-NEXT:    mtvsrd v4, r3
 ; P9BE-NEXT:    li r3, 0
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    add r4, r4, r3
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 6
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 95
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    mulhdu r3, r3, r6
+; P9BE-NEXT:    andi. r4, r4, 94
 ; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v2, r3
@@ -419,60 +425,50 @@ define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
 ; P8LE-LABEL: fold_srem_vec_2:
 ; P8LE:       # %bb.0:
 ; P8LE-NEXT:    xxswapd vs0, v2
-; P8LE-NEXT:    lis r4, -21386
-; P8LE-NEXT:    std r30, -16(r1) # 8-byte Folded Spill
-; P8LE-NEXT:    ori r4, r4, 37253
-; P8LE-NEXT:    mfvsrd r5, f0
-; P8LE-NEXT:    clrldi r3, r5, 48
-; P8LE-NEXT:    rldicl r7, r5, 32, 48
-; P8LE-NEXT:    extsh r8, r3
-; P8LE-NEXT:    rldicl r6, r5, 48, 48
-; P8LE-NEXT:    extsh r10, r7
-; P8LE-NEXT:    rldicl r5, r5, 16, 48
-; P8LE-NEXT:    extsw r8, r8
-; P8LE-NEXT:    extsh r9, r6
-; P8LE-NEXT:    extsw r10, r10
-; P8LE-NEXT:    extsh r11, r5
-; P8LE-NEXT:    mulld r12, r8, r4
-; P8LE-NEXT:    extsw r9, r9
-; P8LE-NEXT:    extsw r11, r11
-; P8LE-NEXT:    mulld r30, r10, r4
-; P8LE-NEXT:    mulld r0, r9, r4
-; P8LE-NEXT:    mulld r4, r11, r4
-; P8LE-NEXT:    rldicl r12, r12, 32, 32
-; P8LE-NEXT:    add r8, r12, r8
-; P8LE-NEXT:    rldicl r12, r30, 32, 32
-; P8LE-NEXT:    ld r30, -16(r1) # 8-byte Folded Reload
-; P8LE-NEXT:    rldicl r0, r0, 32, 32
-; P8LE-NEXT:    rldicl r4, r4, 32, 32
-; P8LE-NEXT:    add r10, r12, r10
-; P8LE-NEXT:    add r9, r0, r9
-; P8LE-NEXT:    srwi r0, r8, 31
-; P8LE-NEXT:    add r4, r4, r11
-; P8LE-NEXT:    srwi r11, r10, 31
-; P8LE-NEXT:    srawi r8, r8, 6
-; P8LE-NEXT:    srawi r10, r10, 6
-; P8LE-NEXT:    srwi r12, r9, 31
-; P8LE-NEXT:    add r8, r8, r0
-; P8LE-NEXT:    srawi r9, r9, 6
-; P8LE-NEXT:    add r10, r10, r11
-; P8LE-NEXT:    srwi r11, r4, 31
-; P8LE-NEXT:    srawi r4, r4, 6
-; P8LE-NEXT:    add r9, r9, r12
-; P8LE-NEXT:    mulli r8, r8, 95
-; P8LE-NEXT:    add r4, r4, r11
-; P8LE-NEXT:    mulli r9, r9, 95
-; P8LE-NEXT:    mulli r10, r10, 95
-; P8LE-NEXT:    mulli r4, r4, 95
-; P8LE-NEXT:    subf r3, r8, r3
-; P8LE-NEXT:    subf r6, r9, r6
-; P8LE-NEXT:    mtvsrd f0, r3
-; P8LE-NEXT:    subf r3, r10, r7
-; P8LE-NEXT:    subf r4, r4, r5
+; P8LE-NEXT:    lis r3, 689
+; P8LE-NEXT:    li r11, 95
+; P8LE-NEXT:    ori r3, r3, 55878
+; P8LE-NEXT:    sldi r3, r3, 32
+; P8LE-NEXT:    mfvsrd r4, f0
+; P8LE-NEXT:    oris r3, r3, 4139
+; P8LE-NEXT:    ori r3, r3, 7589
+; P8LE-NEXT:    clrldi r5, r4, 48
+; P8LE-NEXT:    rldicl r6, r4, 48, 48
+; P8LE-NEXT:    extsh r5, r5
+; P8LE-NEXT:    rldicl r7, r4, 32, 48
+; P8LE-NEXT:    extsh r6, r6
+; P8LE-NEXT:    rldicl r4, r4, 16, 48
+; P8LE-NEXT:    extsw r5, r5
+; P8LE-NEXT:    extsh r7, r7
+; P8LE-NEXT:    extsw r6, r6
+; P8LE-NEXT:    extsh r4, r4
+; P8LE-NEXT:    mulld r8, r5, r3
+; P8LE-NEXT:    extsw r7, r7
+; P8LE-NEXT:    extsw r4, r4
+; P8LE-NEXT:    mulld r9, r6, r3
+; P8LE-NEXT:    mulld r10, r7, r3
+; P8LE-NEXT:    mulld r3, r4, r3
+; P8LE-NEXT:    srawi r5, r5, 31
+; P8LE-NEXT:    srawi r6, r6, 31
+; P8LE-NEXT:    mulhdu r8, r8, r11
+; P8LE-NEXT:    andi. r5, r5, 94
+; P8LE-NEXT:    andi. r6, r6, 94
+; P8LE-NEXT:    mulhdu r9, r9, r11
+; P8LE-NEXT:    srawi r7, r7, 31
+; P8LE-NEXT:    mulhdu r10, r10, r11
+; P8LE-NEXT:    mulhdu r3, r3, r11
+; P8LE-NEXT:    srawi r4, r4, 31
+; P8LE-NEXT:    subf r5, r5, r8
+; P8LE-NEXT:    andi. r4, r4, 94
+; P8LE-NEXT:    mtvsrd f0, r5
+; P8LE-NEXT:    andi. r5, r7, 94
+; P8LE-NEXT:    subf r6, r6, r9
+; P8LE-NEXT:    subf r5, r5, r10
+; P8LE-NEXT:    subf r3, r4, r3
 ; P8LE-NEXT:    mtvsrd f1, r6
-; P8LE-NEXT:    mtvsrd f2, r3
+; P8LE-NEXT:    mtvsrd f2, r5
 ; P8LE-NEXT:    xxswapd v2, vs0
-; P8LE-NEXT:    mtvsrd f3, r4
+; P8LE-NEXT:    mtvsrd f3, r3
 ; P8LE-NEXT:    xxswapd v3, vs1
 ; P8LE-NEXT:    xxswapd v4, vs2
 ; P8LE-NEXT:    xxswapd v5, vs3
@@ -483,62 +479,54 @@ define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
 ;
 ; P8BE-LABEL: fold_srem_vec_2:
 ; P8BE:       # %bb.0:
+; P8BE-NEXT:    lis r3, 689
 ; P8BE-NEXT:    mfvsrd r4, v2
-; P8BE-NEXT:    lis r3, -21386
-; P8BE-NEXT:    ori r3, r3, 37253
+; P8BE-NEXT:    li r11, 95
+; P8BE-NEXT:    ori r3, r3, 55878
+; P8BE-NEXT:    sldi r3, r3, 32
 ; P8BE-NEXT:    clrldi r5, r4, 48
 ; P8BE-NEXT:    rldicl r6, r4, 48, 48
-; P8BE-NEXT:    extsh r5, r5
 ; P8BE-NEXT:    rldicl r7, r4, 32, 48
-; P8BE-NEXT:    extsh r6, r6
-; P8BE-NEXT:    extsw r5, r5
+; P8BE-NEXT:    oris r3, r3, 4139
+; P8BE-NEXT:    extsh r5, r5
 ; P8BE-NEXT:    rldicl r4, r4, 16, 48
+; P8BE-NEXT:    extsh r6, r6
 ; P8BE-NEXT:    extsh r7, r7
-; P8BE-NEXT:    extsw r6, r6
-; P8BE-NEXT:    mulld r8, r5, r3
+; P8BE-NEXT:    ori r3, r3, 7589
+; P8BE-NEXT:    extsw r5, r5
 ; P8BE-NEXT:    extsh r4, r4
+; P8BE-NEXT:    extsw r6, r6
 ; P8BE-NEXT:    extsw r7, r7
-; P8BE-NEXT:    mulld r9, r6, r3
 ; P8BE-NEXT:    extsw r4, r4
+; P8BE-NEXT:    mulld r8, r5, r3
+; P8BE-NEXT:    mulld r9, r6, r3
 ; P8BE-NEXT:    mulld r10, r7, r3
 ; P8BE-NEXT:    mulld r3, r4, r3
-; P8BE-NEXT:    rldicl r8, r8, 32, 32
-; P8BE-NEXT:    rldicl r9, r9, 32, 32
-; P8BE-NEXT:    add r8, r8, r5
-; P8BE-NEXT:    rldicl r10, r10, 32, 32
-; P8BE-NEXT:    add r9, r9, r6
-; P8BE-NEXT:    srwi r11, r8, 31
-; P8BE-NEXT:    srawi r8, r8, 6
-; P8BE-NEXT:    rldicl r3, r3, 32, 32
-; P8BE-NEXT:    add r10, r10, r7
-; P8BE-NEXT:    add r8, r8, r11
-; P8BE-NEXT:    srwi r11, r9, 31
-; P8BE-NEXT:    add r3, r3, r4
-; P8BE-NEXT:    srawi r9, r9, 6
-; P8BE-NEXT:    mulli r8, r8, 95
-; P8BE-NEXT:    add r9, r9, r11
-; P8BE-NEXT:    srwi r11, r10, 31
-; P8BE-NEXT:    srawi r10, r10, 6
-; P8BE-NEXT:    mulli r9, r9, 95
-; P8BE-NEXT:    add r10, r10, r11
-; P8BE-NEXT:    srwi r11, r3, 31
-; P8BE-NEXT:    srawi r3, r3, 6
-; P8BE-NEXT:    mulli r10, r10, 95
-; P8BE-NEXT:    subf r5, r8, r5
-; P8BE-NEXT:    add r3, r3, r11
+; P8BE-NEXT:    srawi r5, r5, 31
+; P8BE-NEXT:    srawi r6, r6, 31
+; P8BE-NEXT:    srawi r7, r7, 31
+; P8BE-NEXT:    andi. r5, r5, 94
+; P8BE-NEXT:    mulhdu r8, r8, r11
+; P8BE-NEXT:    srawi r4, r4, 31
+; P8BE-NEXT:    andi. r6, r6, 94
+; P8BE-NEXT:    andi. r7, r7, 94
+; P8BE-NEXT:    mulhdu r9, r9, r11
+; P8BE-NEXT:    mulhdu r10, r10, r11
+; P8BE-NEXT:    andi. r4, r4, 94
+; P8BE-NEXT:    mulhdu r3, r3, r11
+; P8BE-NEXT:    subf r5, r5, r8
+; P8BE-NEXT:    subf r6, r6, r9
+; P8BE-NEXT:    subf r7, r7, r10
+; P8BE-NEXT:    subf r3, r4, r3
 ; P8BE-NEXT:    sldi r5, r5, 48
-; P8BE-NEXT:    mulli r3, r3, 95
-; P8BE-NEXT:    subf r6, r9, r6
-; P8BE-NEXT:    mtvsrd v2, r5
 ; P8BE-NEXT:    sldi r6, r6, 48
-; P8BE-NEXT:    subf r7, r10, r7
-; P8BE-NEXT:    mtvsrd v3, r6
-; P8BE-NEXT:    subf r3, r3, r4
 ; P8BE-NEXT:    sldi r4, r7, 48
-; P8BE-NEXT:    vmrghh v2, v3, v2
+; P8BE-NEXT:    mtvsrd v2, r5
 ; P8BE-NEXT:    sldi r3, r3, 48
+; P8BE-NEXT:    mtvsrd v3, r6
 ; P8BE-NEXT:    mtvsrd v4, r4
 ; P8BE-NEXT:    mtvsrd v5, r3
+; P8BE-NEXT:    vmrghh v2, v3, v2
 ; P8BE-NEXT:    vmrghh v3, v5, v4
 ; P8BE-NEXT:    vmrghw v2, v3, v2
 ; P8BE-NEXT:    blr
@@ -880,23 +868,6 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v3, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
-; P9LE-NEXT:    li r3, 6
-; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    lis r5, -21386
-; P9LE-NEXT:    ori r5, r5, 37253
-; P9LE-NEXT:    xxswapd v4, vs0
-; P9LE-NEXT:    vmrglh v3, v4, v3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    add r4, r5, r4
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 6
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    mulli r4, r4, 95
-; P9LE-NEXT:    subf r3, r4, r3
-; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 4
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
 ; P9LE-NEXT:    extsh r4, r3
@@ -904,10 +875,28 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; P9LE-NEXT:    addze r4, r4
 ; P9LE-NEXT:    slwi r4, r4, 3
 ; P9LE-NEXT:    subf r3, r4, r3
+; P9LE-NEXT:    lis r5, 689
+; P9LE-NEXT:    xxswapd v4, vs0
+; P9LE-NEXT:    mtvsrd f0, r3
+; P9LE-NEXT:    li r3, 6
+; P9LE-NEXT:    ori r5, r5, 55878
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    oris r5, r5, 4139
+; P9LE-NEXT:    ori r5, r5, 7589
+; P9LE-NEXT:    vmrglh v3, v4, v3
+; P9LE-NEXT:    vextuhrx r3, r3, v2
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 95
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 94
+; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v4, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    xxswapd v2, vs0
-; P9LE-NEXT:    vmrglh v2, v4, v2
+; P9LE-NEXT:    vmrglh v2, v2, v4
 ; P9LE-NEXT:    vmrglw v2, v2, v3
 ; P9LE-NEXT:    blr
 ;
@@ -929,24 +918,7 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; P9BE-NEXT:    addze r4, r4
 ; P9BE-NEXT:    slwi r4, r4, 6
 ; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, -21386
 ; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    mtvsrd v4, r3
-; P9BE-NEXT:    li r3, 6
-; P9BE-NEXT:    vextuhlx r3, r3, v2
-; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 37253
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    add r4, r4, r3
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 6
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 95
-; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    vmrghh v3, v4, v3
 ; P9BE-NEXT:    mtvsrd v4, r3
 ; P9BE-NEXT:    li r3, 4
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
@@ -956,103 +928,123 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; P9BE-NEXT:    slwi r4, r4, 3
 ; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
+; P9BE-NEXT:    lis r5, 689
+; P9BE-NEXT:    vmrghh v3, v4, v3
+; P9BE-NEXT:    mtvsrd v4, r3
+; P9BE-NEXT:    li r3, 6
+; P9BE-NEXT:    ori r5, r5, 55878
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    oris r5, r5, 4139
+; P9BE-NEXT:    ori r5, r5, 7589
+; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
+; P9BE-NEXT:    extsw r3, r3
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 95
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 94
+; P9BE-NEXT:    subf r3, r4, r3
+; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v2, r3
-; P9BE-NEXT:    vmrghh v2, v2, v4
+; P9BE-NEXT:    vmrghh v2, v4, v2
 ; P9BE-NEXT:    vmrghw v2, v3, v2
 ; P9BE-NEXT:    blr
 ;
 ; P8LE-LABEL: dont_fold_srem_power_of_two:
 ; P8LE:       # %bb.0:
 ; P8LE-NEXT:    xxswapd vs0, v2
-; P8LE-NEXT:    lis r3, -21386
-; P8LE-NEXT:    ori r3, r3, 37253
+; P8LE-NEXT:    lis r3, 689
+; P8LE-NEXT:    li r9, 95
+; P8LE-NEXT:    ori r3, r3, 55878
+; P8LE-NEXT:    sldi r3, r3, 32
 ; P8LE-NEXT:    mfvsrd r4, f0
+; P8LE-NEXT:    oris r3, r3, 4139
+; P8LE-NEXT:    ori r3, r3, 7589
 ; P8LE-NEXT:    rldicl r5, r4, 16, 48
-; P8LE-NEXT:    clrldi r7, r4, 48
-; P8LE-NEXT:    extsh r6, r5
-; P8LE-NEXT:    extsh r8, r7
-; P8LE-NEXT:    extsw r6, r6
-; P8LE-NEXT:    rldicl r9, r4, 48, 48
-; P8LE-NEXT:    mulld r3, r6, r3
+; P8LE-NEXT:    clrldi r6, r4, 48
+; P8LE-NEXT:    extsh r5, r5
+; P8LE-NEXT:    extsh r8, r6
+; P8LE-NEXT:    extsw r5, r5
+; P8LE-NEXT:    rldicl r7, r4, 48, 48
+; P8LE-NEXT:    mulld r3, r5, r3
 ; P8LE-NEXT:    srawi r8, r8, 6
-; P8LE-NEXT:    extsh r10, r9
+; P8LE-NEXT:    extsh r10, r7
 ; P8LE-NEXT:    addze r8, r8
 ; P8LE-NEXT:    rldicl r4, r4, 32, 48
 ; P8LE-NEXT:    srawi r10, r10, 5
 ; P8LE-NEXT:    slwi r8, r8, 6
-; P8LE-NEXT:    subf r7, r8, r7
-; P8LE-NEXT:    rldicl r3, r3, 32, 32
-; P8LE-NEXT:    mtvsrd f0, r7
-; P8LE-NEXT:    add r3, r3, r6
-; P8LE-NEXT:    addze r6, r10
-; P8LE-NEXT:    srwi r10, r3, 31
-; P8LE-NEXT:    srawi r3, r3, 6
-; P8LE-NEXT:    slwi r6, r6, 5
-; P8LE-NEXT:    xxswapd v2, vs0
-; P8LE-NEXT:    add r3, r3, r10
-; P8LE-NEXT:    extsh r10, r4
-; P8LE-NEXT:    subf r6, r6, r9
-; P8LE-NEXT:    mulli r3, r3, 95
-; P8LE-NEXT:    srawi r8, r10, 3
+; P8LE-NEXT:    addze r10, r10
+; P8LE-NEXT:    subf r6, r8, r6
+; P8LE-NEXT:    mulhdu r3, r3, r9
+; P8LE-NEXT:    extsh r9, r4
+; P8LE-NEXT:    slwi r8, r10, 5
+; P8LE-NEXT:    mtvsrd f0, r6
+; P8LE-NEXT:    srawi r9, r9, 3
+; P8LE-NEXT:    subf r6, r8, r7
+; P8LE-NEXT:    addze r9, r9
+; P8LE-NEXT:    srawi r5, r5, 31
 ; P8LE-NEXT:    mtvsrd f1, r6
-; P8LE-NEXT:    addze r7, r8
+; P8LE-NEXT:    xxswapd v2, vs0
+; P8LE-NEXT:    slwi r7, r9, 3
+; P8LE-NEXT:    andi. r5, r5, 94
+; P8LE-NEXT:    subf r4, r7, r4
+; P8LE-NEXT:    subf r3, r5, r3
 ; P8LE-NEXT:    xxswapd v3, vs1
-; P8LE-NEXT:    subf r3, r3, r5
-; P8LE-NEXT:    slwi r5, r7, 3
-; P8LE-NEXT:    subf r4, r5, r4
-; P8LE-NEXT:    mtvsrd f2, r3
-; P8LE-NEXT:    mtvsrd f3, r4
+; P8LE-NEXT:    mtvsrd f2, r4
+; P8LE-NEXT:    mtvsrd f3, r3
 ; P8LE-NEXT:    xxswapd v4, vs2
 ; P8LE-NEXT:    vmrglh v2, v3, v2
 ; P8LE-NEXT:    xxswapd v5, vs3
-; P8LE-NEXT:    vmrglh v3, v4, v5
+; P8LE-NEXT:    vmrglh v3, v5, v4
 ; P8LE-NEXT:    vmrglw v2, v3, v2
 ; P8LE-NEXT:    blr
 ;
 ; P8BE-LABEL: dont_fold_srem_power_of_two:
 ; P8BE:       # %bb.0:
+; P8BE-NEXT:    lis r3, 689
 ; P8BE-NEXT:    mfvsrd r4, v2
-; P8BE-NEXT:    lis r3, -21386
-; P8BE-NEXT:    ori r3, r3, 37253
-; P8BE-NEXT:    clrldi r5, r4, 48
-; P8BE-NEXT:    rldicl r6, r4, 32, 48
+; P8BE-NEXT:    li r9, 95
+; P8BE-NEXT:    ori r3, r3, 55878
+; P8BE-NEXT:    sldi r3, r3, 32
+; P8BE-NEXT:    rldicl r5, r4, 32, 48
+; P8BE-NEXT:    rldicl r6, r4, 16, 48
+; P8BE-NEXT:    rldicl r7, r4, 48, 48
+; P8BE-NEXT:    oris r3, r3, 4139
 ; P8BE-NEXT:    extsh r5, r5
+; P8BE-NEXT:    clrldi r4, r4, 48
+; P8BE-NEXT:    ori r3, r3, 7589
 ; P8BE-NEXT:    extsh r6, r6
-; P8BE-NEXT:    extsw r5, r5
-; P8BE-NEXT:    rldicl r7, r4, 16, 48
-; P8BE-NEXT:    mulld r3, r5, r3
-; P8BE-NEXT:    srawi r8, r6, 5
 ; P8BE-NEXT:    extsh r7, r7
-; P8BE-NEXT:    addze r8, r8
-; P8BE-NEXT:    rldicl r4, r4, 48, 48
-; P8BE-NEXT:    srawi r9, r7, 6
 ; P8BE-NEXT:    extsh r4, r4
+; P8BE-NEXT:    srawi r8, r5, 5
+; P8BE-NEXT:    extsw r4, r4
+; P8BE-NEXT:    addze r8, r8
+; P8BE-NEXT:    mulld r3, r4, r3
 ; P8BE-NEXT:    slwi r8, r8, 5
-; P8BE-NEXT:    addze r9, r9
+; P8BE-NEXT:    subf r5, r8, r5
+; P8BE-NEXT:    srawi r8, r6, 6
+; P8BE-NEXT:    addze r8, r8
+; P8BE-NEXT:    sldi r5, r5, 48
+; P8BE-NEXT:    slwi r8, r8, 6
+; P8BE-NEXT:    mtvsrd v2, r5
+; P8BE-NEXT:    mulhdu r3, r3, r9
+; P8BE-NEXT:    srawi r9, r7, 3
 ; P8BE-NEXT:    subf r6, r8, r6
-; P8BE-NEXT:    rldicl r3, r3, 32, 32
-; P8BE-NEXT:    slwi r8, r9, 6
-; P8BE-NEXT:    add r3, r3, r5
-; P8BE-NEXT:    subf r7, r8, r7
-; P8BE-NEXT:    srwi r10, r3, 31
-; P8BE-NEXT:    srawi r3, r3, 6
-; P8BE-NEXT:    add r3, r3, r10
-; P8BE-NEXT:    srawi r9, r4, 3
-; P8BE-NEXT:    mulli r3, r3, 95
+; P8BE-NEXT:    addze r9, r9
+; P8BE-NEXT:    srawi r4, r4, 31
+; P8BE-NEXT:    slwi r8, r9, 3
+; P8BE-NEXT:    andi. r4, r4, 94
+; P8BE-NEXT:    subf r5, r8, r7
 ; P8BE-NEXT:    sldi r6, r6, 48
-; P8BE-NEXT:    addze r8, r9
-; P8BE-NEXT:    mtvsrd v2, r6
-; P8BE-NEXT:    slwi r6, r8, 3
-; P8BE-NEXT:    subf r4, r6, r4
-; P8BE-NEXT:    sldi r4, r4, 48
-; P8BE-NEXT:    subf r3, r3, r5
-; P8BE-NEXT:    sldi r5, r7, 48
-; P8BE-NEXT:    mtvsrd v5, r4
+; P8BE-NEXT:    subf r3, r4, r3
+; P8BE-NEXT:    sldi r5, r5, 48
+; P8BE-NEXT:    mtvsrd v3, r6
 ; P8BE-NEXT:    sldi r3, r3, 48
-; P8BE-NEXT:    mtvsrd v3, r5
-; P8BE-NEXT:    mtvsrd v4, r3
+; P8BE-NEXT:    mtvsrd v4, r5
+; P8BE-NEXT:    mtvsrd v5, r3
 ; P8BE-NEXT:    vmrghh v2, v3, v2
-; P8BE-NEXT:    vmrghh v3, v5, v4
+; P8BE-NEXT:    vmrghh v3, v4, v5
 ; P8BE-NEXT:    vmrghw v2, v2, v3
 ; P8BE-NEXT:    blr
   %1 = srem <4 x i16> %x, <i16 64, i16 32, i16 8, i16 95>
@@ -1063,111 +1055,119 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
 ; P9LE-LABEL: dont_fold_srem_one:
 ; P9LE:       # %bb.0:
-; P9LE-NEXT:    li r3, 2
-; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    lis r5, -14230
-; P9LE-NEXT:    ori r5, r5, 30865
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    xxlxor v4, v4, v4
-; P9LE-NEXT:    add r4, r5, r4
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 9
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    lis r5, -19946
-; P9LE-NEXT:    mulli r4, r4, 654
-; P9LE-NEXT:    subf r3, r4, r3
-; P9LE-NEXT:    mtvsrd f0, r3
+; P9LE-NEXT:    lis r5, 2849
 ; P9LE-NEXT:    li r3, 4
+; P9LE-NEXT:    ori r5, r5, 25644
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    ori r5, r5, 17097
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    add r4, r5, r4
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 4
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    lis r5, 24749
-; P9LE-NEXT:    mulli r4, r4, 23
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    oris r5, r5, 34192
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    ori r5, r5, 45591
+; P9LE-NEXT:    andi. r4, r4, 22
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 23
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    lis r5, 12
+; P9LE-NEXT:    ori r5, r5, 5559
+; P9LE-NEXT:    sldi r5, r5, 32
 ; P9LE-NEXT:    subf r3, r4, r3
-; P9LE-NEXT:    xxswapd v3, vs0
+; P9LE-NEXT:    oris r5, r5, 1244
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 6
+; P9LE-NEXT:    ori r5, r5, 48291
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    ori r5, r5, 47143
-; P9LE-NEXT:    mulld r4, r4, r5
-; P9LE-NEXT:    rldicl r5, r4, 1, 63
-; P9LE-NEXT:    rldicl r4, r4, 32, 32
-; P9LE-NEXT:    srawi r4, r4, 11
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    mulli r4, r4, 5423
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 5423
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 5422
 ; P9LE-NEXT:    subf r3, r4, r3
-; P9LE-NEXT:    vmrglh v3, v3, v4
+; P9LE-NEXT:    lis r5, 100
+; P9LE-NEXT:    xxswapd v3, vs0
+; P9LE-NEXT:    mtvsrd f0, r3
+; P9LE-NEXT:    li r3, 2
+; P9LE-NEXT:    ori r5, r5, 13628
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    oris r5, r5, 18438
+; P9LE-NEXT:    ori r5, r5, 17236
+; P9LE-NEXT:    vextuhrx r3, r3, v2
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 654
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 653
+; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v4, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    xxswapd v2, vs0
+; P9LE-NEXT:    vmrglh v3, v4, v3
+; P9LE-NEXT:    xxlxor v4, v4, v4
 ; P9LE-NEXT:    vmrglh v2, v2, v4
-; P9LE-NEXT:    vmrglw v2, v2, v3
+; P9LE-NEXT:    vmrglw v2, v3, v2
 ; P9LE-NEXT:    blr
 ;
 ; P9BE-LABEL: dont_fold_srem_one:
 ; P9BE:       # %bb.0:
+; P9BE-NEXT:    lis r5, 12
+; P9BE-NEXT:    li r3, 6
+; P9BE-NEXT:    ori r5, r5, 5559
+; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    oris r5, r5, 1244
+; P9BE-NEXT:    srawi r4, r3, 31
+; P9BE-NEXT:    extsw r3, r3
+; P9BE-NEXT:    ori r5, r5, 48291
+; P9BE-NEXT:    andi. r4, r4, 5422
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 5423
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    lis r5, 2849
+; P9BE-NEXT:    ori r5, r5, 25644
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    subf r3, r4, r3
+; P9BE-NEXT:    oris r5, r5, 34192
+; P9BE-NEXT:    sldi r3, r3, 48
+; P9BE-NEXT:    ori r5, r5, 45591
+; P9BE-NEXT:    mtvsrd v3, r3
 ; P9BE-NEXT:    li r3, 4
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    lis r4, -19946
-; P9BE-NEXT:    ori r4, r4, 17097
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    add r4, r4, r3
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 4
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 23
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 23
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 22
 ; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, 24749
 ; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    mtvsrd v3, r3
-; P9BE-NEXT:    li r3, 6
-; P9BE-NEXT:    vextuhlx r3, r3, v2
-; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 47143
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r5, r4, 1, 63
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    srawi r4, r4, 11
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 5423
-; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, -14230
-; P9BE-NEXT:    sldi r3, r3, 48
+; P9BE-NEXT:    lis r5, 100
+; P9BE-NEXT:    ori r5, r5, 13628
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    oris r5, r5, 18438
+; P9BE-NEXT:    ori r5, r5, 17236
 ; P9BE-NEXT:    mtvsrd v4, r3
 ; P9BE-NEXT:    li r3, 2
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 30865
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    add r4, r4, r3
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 9
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 654
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 654
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 653
 ; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v2, r3
 ; P9BE-NEXT:    li r3, 0
 ; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    vmrghh v3, v3, v4
+; P9BE-NEXT:    vmrghh v3, v4, v3
 ; P9BE-NEXT:    mtvsrd v4, r3
 ; P9BE-NEXT:    vmrghh v2, v4, v2
 ; P9BE-NEXT:    vmrghw v2, v2, v3
@@ -1176,107 +1176,115 @@ define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
 ; P8LE-LABEL: dont_fold_srem_one:
 ; P8LE:       # %bb.0:
 ; P8LE-NEXT:    xxswapd vs0, v2
-; P8LE-NEXT:    lis r3, 24749
-; P8LE-NEXT:    lis r8, -19946
-; P8LE-NEXT:    lis r10, -14230
+; P8LE-NEXT:    lis r3, 2849
+; P8LE-NEXT:    lis r4, 12
+; P8LE-NEXT:    lis r5, 100
+; P8LE-NEXT:    li r9, 23
 ; P8LE-NEXT:    xxlxor v5, v5, v5
-; P8LE-NEXT:    ori r3, r3, 47143
-; P8LE-NEXT:    ori r8, r8, 17097
-; P8LE-NEXT:    mfvsrd r4, f0
-; P8LE-NEXT:    rldicl r5, r4, 16, 48
-; P8LE-NEXT:    rldicl r6, r4, 32, 48
-; P8LE-NEXT:    rldicl r4, r4, 48, 48
-; P8LE-NEXT:    extsh r7, r5
-; P8LE-NEXT:    extsh r9, r6
+; P8LE-NEXT:    ori r3, r3, 25644
+; P8LE-NEXT:    ori r4, r4, 5559
+; P8LE-NEXT:    ori r5, r5, 13628
+; P8LE-NEXT:    sldi r3, r3, 32
+; P8LE-NEXT:    sldi r4, r4, 32
+; P8LE-NEXT:    mfvsrd r6, f0
+; P8LE-NEXT:    oris r3, r3, 34192
+; P8LE-NEXT:    sldi r5, r5, 32
+; P8LE-NEXT:    oris r4, r4, 1244
+; P8LE-NEXT:    ori r3, r3, 45591
+; P8LE-NEXT:    oris r5, r5, 18438
+; P8LE-NEXT:    ori r4, r4, 48291
+; P8LE-NEXT:    rldicl r7, r6, 32, 48
+; P8LE-NEXT:    rldicl r8, r6, 16, 48
+; P8LE-NEXT:    ori r5, r5, 17236
+; P8LE-NEXT:    extsh r7, r7
+; P8LE-NEXT:    rldicl r6, r6, 48, 48
+; P8LE-NEXT:    extsh r8, r8
 ; P8LE-NEXT:    extsw r7, r7
-; P8LE-NEXT:    extsh r11, r4
-; P8LE-NEXT:    extsw r9, r9
+; P8LE-NEXT:    extsh r6, r6
+; P8LE-NEXT:    extsw r8, r8
 ; P8LE-NEXT:    mulld r3, r7, r3
-; P8LE-NEXT:    ori r7, r10, 30865
-; P8LE-NEXT:    extsw r10, r11
-; P8LE-NEXT:    mulld r8, r9, r8
-; P8LE-NEXT:    mulld r7, r10, r7
-; P8LE-NEXT:    rldicl r11, r3, 1, 63
-; P8LE-NEXT:    rldicl r3, r3, 32, 32
-; P8LE-NEXT:    rldicl r8, r8, 32, 32
-; P8LE-NEXT:    rldicl r7, r7, 32, 32
-; P8LE-NEXT:    add r8, r8, r9
-; P8LE-NEXT:    srawi r3, r3, 11
-; P8LE-NEXT:    add r7, r7, r10
-; P8LE-NEXT:    srwi r9, r8, 31
-; P8LE-NEXT:    srawi r8, r8, 4
-; P8LE-NEXT:    add r3, r3, r11
-; P8LE-NEXT:    add r8, r8, r9
-; P8LE-NEXT:    srwi r9, r7, 31
-; P8LE-NEXT:    srawi r7, r7, 9
-; P8LE-NEXT:    mulli r3, r3, 5423
-; P8LE-NEXT:    add r7, r7, r9
-; P8LE-NEXT:    mulli r8, r8, 23
-; P8LE-NEXT:    mulli r7, r7, 654
-; P8LE-NEXT:    subf r3, r3, r5
-; P8LE-NEXT:    mtvsrd f0, r3
-; P8LE-NEXT:    subf r3, r8, r6
+; P8LE-NEXT:    extsw r6, r6
+; P8LE-NEXT:    mulld r4, r8, r4
+; P8LE-NEXT:    mulld r5, r6, r5
+; P8LE-NEXT:    srawi r7, r7, 31
+; P8LE-NEXT:    srawi r8, r8, 31
+; P8LE-NEXT:    andi. r7, r7, 22
+; P8LE-NEXT:    srawi r6, r6, 31
+; P8LE-NEXT:    mulhdu r3, r3, r9
+; P8LE-NEXT:    li r9, 5423
+; P8LE-NEXT:    andi. r6, r6, 653
+; P8LE-NEXT:    mulhdu r4, r4, r9
+; P8LE-NEXT:    li r9, 654
+; P8LE-NEXT:    mulhdu r5, r5, r9
+; P8LE-NEXT:    subf r3, r7, r3
+; P8LE-NEXT:    andi. r7, r8, 5422
 ; P8LE-NEXT:    subf r4, r7, r4
-; P8LE-NEXT:    mtvsrd f1, r3
-; P8LE-NEXT:    mtvsrd f2, r4
+; P8LE-NEXT:    mtvsrd f0, r3
+; P8LE-NEXT:    subf r3, r6, r5
+; P8LE-NEXT:    mtvsrd f1, r4
+; P8LE-NEXT:    mtvsrd f2, r3
 ; P8LE-NEXT:    xxswapd v2, vs0
 ; P8LE-NEXT:    xxswapd v3, vs1
 ; P8LE-NEXT:    xxswapd v4, vs2
-; P8LE-NEXT:    vmrglh v2, v2, v3
+; P8LE-NEXT:    vmrglh v2, v3, v2
 ; P8LE-NEXT:    vmrglh v3, v4, v5
 ; P8LE-NEXT:    vmrglw v2, v2, v3
 ; P8LE-NEXT:    blr
 ;
 ; P8BE-LABEL: dont_fold_srem_one:
 ; P8BE:       # %bb.0:
-; P8BE-NEXT:    mfvsrd r4, v2
-; P8BE-NEXT:    lis r3, 24749
-; P8BE-NEXT:    lis r7, -19946
-; P8BE-NEXT:    lis r8, -14230
-; P8BE-NEXT:    ori r3, r3, 47143
-; P8BE-NEXT:    ori r7, r7, 17097
-; P8BE-NEXT:    ori r8, r8, 30865
-; P8BE-NEXT:    clrldi r5, r4, 48
-; P8BE-NEXT:    rldicl r6, r4, 48, 48
-; P8BE-NEXT:    rldicl r4, r4, 32, 48
-; P8BE-NEXT:    extsh r5, r5
+; P8BE-NEXT:    lis r3, 12
+; P8BE-NEXT:    mfvsrd r6, v2
+; P8BE-NEXT:    lis r4, 2849
+; P8BE-NEXT:    lis r5, 100
+; P8BE-NEXT:    li r9, 5423
+; P8BE-NEXT:    ori r3, r3, 5559
+; P8BE-NEXT:    ori r4, r4, 25644
+; P8BE-NEXT:    ori r5, r5, 13628
+; P8BE-NEXT:    sldi r3, r3, 32
+; P8BE-NEXT:    clrldi r7, r6, 48
+; P8BE-NEXT:    sldi r4, r4, 32
+; P8BE-NEXT:    rldicl r8, r6, 48, 48
+; P8BE-NEXT:    oris r3, r3, 1244
+; P8BE-NEXT:    extsh r7, r7
+; P8BE-NEXT:    sldi r5, r5, 32
+; P8BE-NEXT:    rldicl r6, r6, 32, 48
+; P8BE-NEXT:    oris r4, r4, 34192
+; P8BE-NEXT:    ori r3, r3, 48291
+; P8BE-NEXT:    extsh r8, r8
+; P8BE-NEXT:    extsw r7, r7
+; P8BE-NEXT:    oris r5, r5, 18438
+; P8BE-NEXT:    ori r4, r4, 45591
 ; P8BE-NEXT:    extsh r6, r6
-; P8BE-NEXT:    extsh r4, r4
-; P8BE-NEXT:    extsw r5, r5
+; P8BE-NEXT:    extsw r8, r8
+; P8BE-NEXT:    mulld r3, r7, r3
+; P8BE-NEXT:    ori r5, r5, 17236
 ; P8BE-NEXT:    extsw r6, r6
-; P8BE-NEXT:    extsw r4, r4
-; P8BE-NEXT:    mulld r3, r5, r3
-; P8BE-NEXT:    mulld r7, r6, r7
-; P8BE-NEXT:    mulld r8, r4, r8
-; P8BE-NEXT:    rldicl r9, r3, 1, 63
-; P8BE-NEXT:    rldicl r3, r3, 32, 32
-; P8BE-NEXT:    rldicl r7, r7, 32, 32
-; P8BE-NEXT:    rldicl r8, r8, 32, 32
-; P8BE-NEXT:    srawi r3, r3, 11
-; P8BE-NEXT:    add r7, r7, r6
-; P8BE-NEXT:    add r8, r8, r4
-; P8BE-NEXT:    add r3, r3, r9
-; P8BE-NEXT:    srwi r9, r7, 31
-; P8BE-NEXT:    srawi r7, r7, 4
-; P8BE-NEXT:    mulli r3, r3, 5423
-; P8BE-NEXT:    add r7, r7, r9
-; P8BE-NEXT:    srwi r9, r8, 31
-; P8BE-NEXT:    srawi r8, r8, 9
-; P8BE-NEXT:    mulli r7, r7, 23
-; P8BE-NEXT:    add r8, r8, r9
+; P8BE-NEXT:    mulld r4, r8, r4
+; P8BE-NEXT:    mulld r5, r6, r5
+; P8BE-NEXT:    srawi r7, r7, 31
+; P8BE-NEXT:    srawi r8, r8, 31
+; P8BE-NEXT:    andi. r7, r7, 5422
+; P8BE-NEXT:    srawi r6, r6, 31
+; P8BE-NEXT:    mulhdu r3, r3, r9
+; P8BE-NEXT:    li r9, 23
+; P8BE-NEXT:    andi. r6, r6, 653
+; P8BE-NEXT:    mulhdu r4, r4, r9
+; P8BE-NEXT:    li r9, 654
+; P8BE-NEXT:    mulhdu r5, r5, r9
 ; P8BE-NEXT:    li r9, 0
-; P8BE-NEXT:    mulli r8, r8, 654
-; P8BE-NEXT:    subf r3, r3, r5
-; P8BE-NEXT:    sldi r5, r9, 48
+; P8BE-NEXT:    sldi r9, r9, 48
+; P8BE-NEXT:    subf r3, r7, r3
+; P8BE-NEXT:    andi. r7, r8, 22
+; P8BE-NEXT:    mtvsrd v2, r9
+; P8BE-NEXT:    subf r4, r7, r4
 ; P8BE-NEXT:    sldi r3, r3, 48
-; P8BE-NEXT:    mtvsrd v2, r5
-; P8BE-NEXT:    subf r5, r7, r6
+; P8BE-NEXT:    subf r5, r6, r5
+; P8BE-NEXT:    sldi r4, r4, 48
 ; P8BE-NEXT:    mtvsrd v3, r3
 ; P8BE-NEXT:    sldi r3, r5, 48
-; P8BE-NEXT:    subf r4, r8, r4
-; P8BE-NEXT:    mtvsrd v4, r3
-; P8BE-NEXT:    sldi r4, r4, 48
-; P8BE-NEXT:    mtvsrd v5, r4
+; P8BE-NEXT:    mtvsrd v4, r4
+; P8BE-NEXT:    mtvsrd v5, r3
 ; P8BE-NEXT:    vmrghh v3, v4, v3
 ; P8BE-NEXT:    vmrghh v2, v2, v5
 ; P8BE-NEXT:    vmrghw v2, v2, v3
@@ -1289,33 +1297,36 @@ define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
 define <4 x i16> @dont_fold_urem_i16_smax(<4 x i16> %x) {
 ; P9LE-LABEL: dont_fold_urem_i16_smax:
 ; P9LE:       # %bb.0:
+; P9LE-NEXT:    lis r5, 2849
 ; P9LE-NEXT:    li r3, 4
+; P9LE-NEXT:    ori r5, r5, 25644
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    lis r5, -19946
-; P9LE-NEXT:    ori r5, r5, 17097
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    mulld r5, r4, r5
-; P9LE-NEXT:    rldicl r5, r5, 32, 32
-; P9LE-NEXT:    add r4, r5, r4
-; P9LE-NEXT:    srwi r5, r4, 31
-; P9LE-NEXT:    srawi r4, r4, 4
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    lis r5, 24749
-; P9LE-NEXT:    mulli r4, r4, 23
+; P9LE-NEXT:    sldi r5, r5, 32
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    oris r5, r5, 34192
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    ori r5, r5, 45591
+; P9LE-NEXT:    andi. r4, r4, 22
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 23
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    lis r5, 12
+; P9LE-NEXT:    ori r5, r5, 5559
+; P9LE-NEXT:    sldi r5, r5, 32
 ; P9LE-NEXT:    subf r3, r4, r3
+; P9LE-NEXT:    oris r5, r5, 1244
 ; P9LE-NEXT:    mtvsrd f0, r3
 ; P9LE-NEXT:    li r3, 6
+; P9LE-NEXT:    ori r5, r5, 48291
 ; P9LE-NEXT:    vextuhrx r3, r3, v2
-; P9LE-NEXT:    extsh r4, r3
-; P9LE-NEXT:    extsw r4, r4
-; P9LE-NEXT:    ori r5, r5, 47143
-; P9LE-NEXT:    mulld r4, r4, r5
-; P9LE-NEXT:    rldicl r5, r4, 1, 63
-; P9LE-NEXT:    rldicl r4, r4, 32, 32
-; P9LE-NEXT:    srawi r4, r4, 11
-; P9LE-NEXT:    add r4, r4, r5
-; P9LE-NEXT:    mulli r4, r4, 5423
+; P9LE-NEXT:    extsh r3, r3
+; P9LE-NEXT:    srawi r4, r3, 31
+; P9LE-NEXT:    extsw r3, r3
+; P9LE-NEXT:    mulld r3, r3, r5
+; P9LE-NEXT:    li r5, 5423
+; P9LE-NEXT:    mulhdu r3, r3, r5
+; P9LE-NEXT:    andi. r4, r4, 5422
 ; P9LE-NEXT:    subf r3, r4, r3
 ; P9LE-NEXT:    xxswapd v3, vs0
 ; P9LE-NEXT:    mtvsrd f0, r3
@@ -1337,34 +1348,37 @@ define <4 x i16> @dont_fold_urem_i16_smax(<4 x i16> %x) {
 ;
 ; P9BE-LABEL: dont_fold_urem_i16_smax:
 ; P9BE:       # %bb.0:
+; P9BE-NEXT:    lis r5, 12
+; P9BE-NEXT:    li r3, 6
+; P9BE-NEXT:    ori r5, r5, 5559
+; P9BE-NEXT:    vextuhlx r3, r3, v2
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    extsh r3, r3
+; P9BE-NEXT:    oris r5, r5, 1244
+; P9BE-NEXT:    srawi r4, r3, 31
+; P9BE-NEXT:    extsw r3, r3
+; P9BE-NEXT:    ori r5, r5, 48291
+; P9BE-NEXT:    andi. r4, r4, 5422
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 5423
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    lis r5, 2849
+; P9BE-NEXT:    ori r5, r5, 25644
+; P9BE-NEXT:    sldi r5, r5, 32
+; P9BE-NEXT:    subf r3, r4, r3
+; P9BE-NEXT:    oris r5, r5, 34192
+; P9BE-NEXT:    sldi r3, r3, 48
+; P9BE-NEXT:    ori r5, r5, 45591
+; P9BE-NEXT:    mtvsrd v3, r3
 ; P9BE-NEXT:    li r3, 4
 ; P9BE-NEXT:    vextuhlx r3, r3, v2
 ; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    lis r4, -19946
-; P9BE-NEXT:    ori r4, r4, 17097
+; P9BE-NEXT:    srawi r4, r3, 31
 ; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    add r4, r4, r3
-; P9BE-NEXT:    srwi r5, r4, 31
-; P9BE-NEXT:    srawi r4, r4, 4
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 23
-; P9BE-NEXT:    subf r3, r4, r3
-; P9BE-NEXT:    lis r4, 24749
-; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    mtvsrd v3, r3
-; P9BE-NEXT:    li r3, 6
-; P9BE-NEXT:    vextuhlx r3, r3, v2
-; P9BE-NEXT:    extsh r3, r3
-; P9BE-NEXT:    extsw r3, r3
-; P9BE-NEXT:    ori r4, r4, 47143
-; P9BE-NEXT:    mulld r4, r3, r4
-; P9BE-NEXT:    rldicl r5, r4, 1, 63
-; P9BE-NEXT:    rldicl r4, r4, 32, 32
-; P9BE-NEXT:    srawi r4, r4, 11
-; P9BE-NEXT:    add r4, r4, r5
-; P9BE-NEXT:    mulli r4, r4, 5423
+; P9BE-NEXT:    mulld r3, r3, r5
+; P9BE-NEXT:    li r5, 23
+; P9BE-NEXT:    mulhdu r3, r3, r5
+; P9BE-NEXT:    andi. r4, r4, 22
 ; P9BE-NEXT:    subf r3, r4, r3
 ; P9BE-NEXT:    sldi r3, r3, 48
 ; P9BE-NEXT:    mtvsrd v4, r3
@@ -1379,7 +1393,7 @@ define <4 x i16> @dont_fold_urem_i16_smax(<4 x i16> %x) {
 ; P9BE-NEXT:    mtvsrd v2, r3
 ; P9BE-NEXT:    li r3, 0
 ; P9BE-NEXT:    sldi r3, r3, 48
-; P9BE-NEXT:    vmrghh v3, v3, v4
+; P9BE-NEXT:    vmrghh v3, v4, v3
 ; P9BE-NEXT:    mtvsrd v4, r3
 ; P9BE-NEXT:    vmrghh v2, v4, v2
 ; P9BE-NEXT:    vmrghw v2, v2, v3
@@ -1388,95 +1402,101 @@ define <4 x i16> @dont_fold_urem_i16_smax(<4 x i16> %x) {
 ; P8LE-LABEL: dont_fold_urem_i16_smax:
 ; P8LE:       # %bb.0:
 ; P8LE-NEXT:    xxswapd vs0, v2
-; P8LE-NEXT:    lis r6, 24749
-; P8LE-NEXT:    lis r7, -19946
+; P8LE-NEXT:    lis r3, 2849
+; P8LE-NEXT:    lis r4, 12
+; P8LE-NEXT:    li r8, 23
 ; P8LE-NEXT:    xxlxor v5, v5, v5
-; P8LE-NEXT:    ori r6, r6, 47143
-; P8LE-NEXT:    ori r7, r7, 17097
-; P8LE-NEXT:    mfvsrd r3, f0
-; P8LE-NEXT:    rldicl r4, r3, 16, 48
-; P8LE-NEXT:    rldicl r5, r3, 32, 48
-; P8LE-NEXT:    extsh r8, r4
-; P8LE-NEXT:    extsh r9, r5
-; P8LE-NEXT:    extsw r8, r8
-; P8LE-NEXT:    extsw r9, r9
-; P8LE-NEXT:    mulld r6, r8, r6
-; P8LE-NEXT:    mulld r7, r9, r7
-; P8LE-NEXT:    rldicl r3, r3, 48, 48
-; P8LE-NEXT:    rldicl r8, r6, 32, 32
-; P8LE-NEXT:    rldicl r7, r7, 32, 32
-; P8LE-NEXT:    rldicl r6, r6, 1, 63
-; P8LE-NEXT:    srawi r8, r8, 11
-; P8LE-NEXT:    add r7, r7, r9
-; P8LE-NEXT:    add r6, r8, r6
-; P8LE-NEXT:    srwi r8, r7, 31
-; P8LE-NEXT:    srawi r7, r7, 4
-; P8LE-NEXT:    mulli r6, r6, 5423
-; P8LE-NEXT:    add r7, r7, r8
-; P8LE-NEXT:    extsh r8, r3
-; P8LE-NEXT:    mulli r7, r7, 23
+; P8LE-NEXT:    ori r3, r3, 25644
+; P8LE-NEXT:    ori r4, r4, 5559
+; P8LE-NEXT:    sldi r3, r3, 32
+; P8LE-NEXT:    sldi r4, r4, 32
+; P8LE-NEXT:    mfvsrd r5, f0
+; P8LE-NEXT:    oris r3, r3, 34192
+; P8LE-NEXT:    oris r4, r4, 1244
+; P8LE-NEXT:    ori r3, r3, 45591
+; P8LE-NEXT:    ori r4, r4, 48291
+; P8LE-NEXT:    rldicl r6, r5, 32, 48
+; P8LE-NEXT:    rldicl r7, r5, 16, 48
+; P8LE-NEXT:    extsh r6, r6
+; P8LE-NEXT:    extsh r7, r7
+; P8LE-NEXT:    extsw r6, r6
+; P8LE-NEXT:    extsw r7, r7
+; P8LE-NEXT:    mulld r3, r6, r3
+; P8LE-NEXT:    mulld r4, r7, r4
+; P8LE-NEXT:    rldicl r5, r5, 48, 48
+; P8LE-NEXT:    srawi r6, r6, 31
+; P8LE-NEXT:    srawi r7, r7, 31
+; P8LE-NEXT:    andi. r6, r6, 22
+; P8LE-NEXT:    mulhdu r3, r3, r8
+; P8LE-NEXT:    li r8, 5423
+; P8LE-NEXT:    mulhdu r4, r4, r8
+; P8LE-NEXT:    extsh r8, r5
 ; P8LE-NEXT:    srawi r8, r8, 15
+; P8LE-NEXT:    subf r3, r6, r3
+; P8LE-NEXT:    andi. r6, r7, 5422
+; P8LE-NEXT:    addze r7, r8
 ; P8LE-NEXT:    subf r4, r6, r4
-; P8LE-NEXT:    addze r6, r8
-; P8LE-NEXT:    mtvsrd f0, r4
-; P8LE-NEXT:    slwi r4, r6, 15
-; P8LE-NEXT:    subf r5, r7, r5
-; P8LE-NEXT:    subf r3, r4, r3
-; P8LE-NEXT:    mtvsrd f1, r5
-; P8LE-NEXT:    xxswapd v2, vs0
+; P8LE-NEXT:    slwi r6, r7, 15
+; P8LE-NEXT:    mtvsrd f0, r3
+; P8LE-NEXT:    subf r3, r6, r5
+; P8LE-NEXT:    mtvsrd f1, r4
 ; P8LE-NEXT:    mtvsrd f2, r3
+; P8LE-NEXT:    xxswapd v2, vs0
 ; P8LE-NEXT:    xxswapd v3, vs1
 ; P8LE-NEXT:    xxswapd v4, vs2
-; P8LE-NEXT:    vmrglh v2, v2, v3
+; P8LE-NEXT:    vmrglh v2, v3, v2
 ; P8LE-NEXT:    vmrglh v3, v4, v5
 ; P8LE-NEXT:    vmrglw v2, v2, v3
 ; P8LE-NEXT:    blr
 ;
 ; P8BE-LABEL: dont_fold_urem_i16_smax:
 ; P8BE:       # %bb.0:
-; P8BE-NEXT:    mfvsrd r4, v2
-; P8BE-NEXT:    lis r3, 24749
-; P8BE-NEXT:    lis r7, -19946
-; P8BE-NEXT:    ori r3, r3, 47143
-; P8BE-NEXT:    ori r7, r7, 17097
-; P8BE-NEXT:    clrldi r5, r4, 48
-; P8BE-NEXT:    rldicl r6, r4, 48, 48
-; P8BE-NEXT:    extsh r5, r5
+; P8BE-NEXT:    lis r3, 12
+; P8BE-NEXT:    mfvsrd r5, v2
+; P8BE-NEXT:    lis r4, 2849
+; P8BE-NEXT:    li r8, 5423
+; P8BE-NEXT:    li r9, 23
+; P8BE-NEXT:    ori r3, r3, 5559
+; P8BE-NEXT:    ori r4, r4, 25644
+; P8BE-NEXT:    sldi r3, r3, 32
+; P8BE-NEXT:    clrldi r6, r5, 48
+; P8BE-NEXT:    sldi r4, r4, 32
+; P8BE-NEXT:    oris r3, r3, 1244
 ; P8BE-NEXT:    extsh r6, r6
-; P8BE-NEXT:    extsw r5, r5
+; P8BE-NEXT:    rldicl r7, r5, 48, 48
+; P8BE-NEXT:    oris r4, r4, 34192
+; P8BE-NEXT:    ori r3, r3, 48291
 ; P8BE-NEXT:    extsw r6, r6
-; P8BE-NEXT:    mulld r3, r5, r3
-; P8BE-NEXT:    mulld r7, r6, r7
-; P8BE-NEXT:    rldicl r4, r4, 32, 48
-; P8BE-NEXT:    extsh r4, r4
-; P8BE-NEXT:    rldicl r8, r3, 1, 63
-; P8BE-NEXT:    rldicl r3, r3, 32, 32
-; P8BE-NEXT:    rldicl r7, r7, 32, 32
-; P8BE-NEXT:    srawi r3, r3, 11
-; P8BE-NEXT:    add r7, r7, r6
-; P8BE-NEXT:    add r3, r3, r8
-; P8BE-NEXT:    srwi r8, r7, 31
-; P8BE-NEXT:    srawi r7, r7, 4
-; P8BE-NEXT:    mulli r3, r3, 5423
-; P8BE-NEXT:    add r7, r7, r8
+; P8BE-NEXT:    extsh r7, r7
+; P8BE-NEXT:    ori r4, r4, 45591
+; P8BE-NEXT:    extsw r7, r7
+; P8BE-NEXT:    mulld r3, r6, r3
+; P8BE-NEXT:    mulld r4, r7, r4
+; P8BE-NEXT:    rldicl r5, r5, 32, 48
+; P8BE-NEXT:    extsh r5, r5
+; P8BE-NEXT:    mulhdu r3, r3, r8
 ; P8BE-NEXT:    li r8, 0
-; P8BE-NEXT:    mulli r7, r7, 23
-; P8BE-NEXT:    srawi r9, r4, 15
-; P8BE-NEXT:    subf r3, r3, r5
-; P8BE-NEXT:    sldi r5, r8, 48
-; P8BE-NEXT:    addze r8, r9
-; P8BE-NEXT:    mtvsrd v2, r5
-; P8BE-NEXT:    subf r5, r7, r6
-; P8BE-NEXT:    slwi r6, r8, 15
-; P8BE-NEXT:    sldi r3, r3, 48
+; P8BE-NEXT:    mulhdu r4, r4, r9
+; P8BE-NEXT:    srawi r9, r5, 15
+; P8BE-NEXT:    addze r9, r9
+; P8BE-NEXT:    srawi r6, r6, 31
+; P8BE-NEXT:    srawi r7, r7, 31
+; P8BE-NEXT:    andi. r6, r6, 5422
+; P8BE-NEXT:    slwi r9, r9, 15
+; P8BE-NEXT:    subf r3, r6, r3
+; P8BE-NEXT:    andi. r6, r7, 22
+; P8BE-NEXT:    subf r5, r9, r5
 ; P8BE-NEXT:    subf r4, r6, r4
-; P8BE-NEXT:    mtvsrd v3, r3
-; P8BE-NEXT:    sldi r3, r5, 48
+; P8BE-NEXT:    sldi r8, r8, 48
+; P8BE-NEXT:    sldi r5, r5, 48
+; P8BE-NEXT:    sldi r3, r3, 48
+; P8BE-NEXT:    mtvsrd v2, r8
 ; P8BE-NEXT:    sldi r4, r4, 48
+; P8BE-NEXT:    mtvsrd v3, r5
 ; P8BE-NEXT:    mtvsrd v4, r3
 ; P8BE-NEXT:    mtvsrd v5, r4
-; P8BE-NEXT:    vmrghh v3, v4, v3
-; P8BE-NEXT:    vmrghh v2, v2, v5
+; P8BE-NEXT:    vmrghh v2, v2, v3
+; P8BE-NEXT:    vmrghh v3, v5, v4
 ; P8BE-NEXT:    vmrghw v2, v2, v3
 ; P8BE-NEXT:    blr
   %1 = srem <4 x i16> %x, <i16 1, i16 32768, i16 23, i16 5423>

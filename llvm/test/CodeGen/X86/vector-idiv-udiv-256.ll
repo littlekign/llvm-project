@@ -561,16 +561,29 @@ define <16 x i16> @test_rem7_16i16(<16 x i16> %a) nounwind {
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
-; AVX2-LABEL: test_rem7_16i16:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpmulhuw {{.*}}(%rip), %ymm0, %ymm1
-; AVX2-NEXT:    vpsubw %ymm1, %ymm0, %ymm2
-; AVX2-NEXT:    vpsrlw $1, %ymm2, %ymm2
-; AVX2-NEXT:    vpaddw %ymm1, %ymm2, %ymm1
-; AVX2-NEXT:    vpsrlw $2, %ymm1, %ymm1
-; AVX2-NEXT:    vpmullw {{.*}}(%rip), %ymm1, %ymm1
-; AVX2-NEXT:    vpsubw %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    retq
+; AVX2NOBW-LABEL: test_rem7_16i16:
+; AVX2NOBW:       # %bb.0:
+; AVX2NOBW-NEXT:    vpmulhuw {{.*}}(%rip), %ymm0, %ymm1
+; AVX2NOBW-NEXT:    vpsubw %ymm1, %ymm0, %ymm2
+; AVX2NOBW-NEXT:    vpsrlw $1, %ymm2, %ymm2
+; AVX2NOBW-NEXT:    vpaddw %ymm1, %ymm2, %ymm1
+; AVX2NOBW-NEXT:    vpsrlw $2, %ymm1, %ymm1
+; AVX2NOBW-NEXT:    vpmullw {{.*}}(%rip), %ymm1, %ymm1
+; AVX2NOBW-NEXT:    vpsubw %ymm1, %ymm0, %ymm0
+; AVX2NOBW-NEXT:    retq
+;
+; AVX512BW-LABEL: test_rem7_16i16:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpmovzxwd {{.*#+}} zmm0 = ymm0[0],zero,ymm0[1],zero,ymm0[2],zero,ymm0[3],zero,ymm0[4],zero,ymm0[5],zero,ymm0[6],zero,ymm0[7],zero,ymm0[8],zero,ymm0[9],zero,ymm0[10],zero,ymm0[11],zero,ymm0[12],zero,ymm0[13],zero,ymm0[14],zero,ymm0[15],zero
+; AVX512BW-NEXT:    vpmulld {{.*}}(%rip){1to16}, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} zmm1 = [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]
+; AVX512BW-NEXT:    vpmuludq %zmm1, %zmm0, %zmm2
+; AVX512BW-NEXT:    vpshufd {{.*#+}} zmm0 = zmm0[1,1,3,3,5,5,7,7,9,9,11,11,13,13,15,15]
+; AVX512BW-NEXT:    vpmuludq %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    vmovdqa64 {{.*#+}} zmm1 = [1,17,3,19,5,21,7,23,9,25,11,27,13,29,15,31]
+; AVX512BW-NEXT:    vpermi2d %zmm0, %zmm2, %zmm1
+; AVX512BW-NEXT:    vpmovdw %zmm1, %ymm0
+; AVX512BW-NEXT:    retq
   %res = urem <16 x i16> %a, <i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7>
   ret <16 x i16> %res
 }
@@ -646,20 +659,10 @@ define <32 x i8> @test_rem7_32i8(<32 x i8> %a) nounwind {
 ;
 ; AVX512BW-LABEL: test_rem7_32i8:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpmovzxbw {{.*#+}} zmm1 = ymm0[0],zero,ymm0[1],zero,ymm0[2],zero,ymm0[3],zero,ymm0[4],zero,ymm0[5],zero,ymm0[6],zero,ymm0[7],zero,ymm0[8],zero,ymm0[9],zero,ymm0[10],zero,ymm0[11],zero,ymm0[12],zero,ymm0[13],zero,ymm0[14],zero,ymm0[15],zero,ymm0[16],zero,ymm0[17],zero,ymm0[18],zero,ymm0[19],zero,ymm0[20],zero,ymm0[21],zero,ymm0[22],zero,ymm0[23],zero,ymm0[24],zero,ymm0[25],zero,ymm0[26],zero,ymm0[27],zero,ymm0[28],zero,ymm0[29],zero,ymm0[30],zero,ymm0[31],zero
-; AVX512BW-NEXT:    vpmullw {{.*}}(%rip), %zmm1, %zmm1
-; AVX512BW-NEXT:    vpsrlw $8, %zmm1, %zmm1
-; AVX512BW-NEXT:    vpmovwb %zmm1, %ymm1
-; AVX512BW-NEXT:    vpsubb %ymm1, %ymm0, %ymm2
-; AVX512BW-NEXT:    vpsrlw $1, %ymm2, %ymm2
-; AVX512BW-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
-; AVX512BW-NEXT:    vpaddb %ymm1, %ymm2, %ymm1
-; AVX512BW-NEXT:    vpsrlw $2, %ymm1, %ymm1
-; AVX512BW-NEXT:    vpand {{.*}}(%rip), %ymm1, %ymm1
-; AVX512BW-NEXT:    vpsllw $3, %ymm1, %ymm2
-; AVX512BW-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
-; AVX512BW-NEXT:    vpsubb %ymm2, %ymm1, %ymm1
-; AVX512BW-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
+; AVX512BW-NEXT:    vpmovzxbw {{.*#+}} zmm0 = ymm0[0],zero,ymm0[1],zero,ymm0[2],zero,ymm0[3],zero,ymm0[4],zero,ymm0[5],zero,ymm0[6],zero,ymm0[7],zero,ymm0[8],zero,ymm0[9],zero,ymm0[10],zero,ymm0[11],zero,ymm0[12],zero,ymm0[13],zero,ymm0[14],zero,ymm0[15],zero,ymm0[16],zero,ymm0[17],zero,ymm0[18],zero,ymm0[19],zero,ymm0[20],zero,ymm0[21],zero,ymm0[22],zero,ymm0[23],zero,ymm0[24],zero,ymm0[25],zero,ymm0[26],zero,ymm0[27],zero,ymm0[28],zero,ymm0[29],zero,ymm0[30],zero,ymm0[31],zero
+; AVX512BW-NEXT:    vpmullw {{.*}}(%rip), %zmm0, %zmm0
+; AVX512BW-NEXT:    vpmulhuw {{.*}}(%rip), %zmm0, %zmm0
+; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
 ; AVX512BW-NEXT:    retq
   %res = urem <32 x i8> %a, <i8 7, i8 7, i8 7, i8 7,i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7,i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7,i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7,i8 7, i8 7, i8 7, i8 7>
   ret <32 x i8> %res

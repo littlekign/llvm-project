@@ -3964,6 +3964,12 @@ public:
   /// power-of-2 denominators.  If the target returns an empty SDValue, LLVM
   /// assumes SDIV is expensive and replaces it with a series of other integer
   /// operations.
+
+  SDValue BuildSREM(SDNode *Node, SelectionDAG &DAG, bool IsAfterLegalization,
+                    SmallVectorImpl<SDNode *> &Created) const;
+  SDValue BuildUREM(SDNode *Node, SelectionDAG &DAG, bool IsAfterLegalization,
+                    SmallVectorImpl<SDNode *> &Created) const;
+
   virtual SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor,
                                 SelectionDAG &DAG,
                                 SmallVectorImpl<SDNode *> &Created) const;

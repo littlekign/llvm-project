@@ -4,50 +4,21 @@
 define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
 ; CHECK-LABEL: fold_srem_vec_1:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mov w9, #63421
-; CHECK-NEXT:    mov w12, #33437
-; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
-; CHECK-NEXT:    smov w8, v0.h[1]
-; CHECK-NEXT:    movk w9, #31710, lsl #16
-; CHECK-NEXT:    smov w11, v0.h[2]
-; CHECK-NEXT:    movk w12, #21399, lsl #16
-; CHECK-NEXT:    smull x12, w11, w12
-; CHECK-NEXT:    smull x9, w8, w9
-; CHECK-NEXT:    lsr x13, x12, #63
-; CHECK-NEXT:    asr x12, x12, #37
-; CHECK-NEXT:    lsr x9, x9, #32
-; CHECK-NEXT:    add w12, w12, w13
-; CHECK-NEXT:    mov w13, #98
-; CHECK-NEXT:    sub w9, w9, w8
-; CHECK-NEXT:    msub w11, w12, w13, w11
-; CHECK-NEXT:    asr w13, w9, #6
-; CHECK-NEXT:    add w9, w13, w9, lsr #31
-; CHECK-NEXT:    mov w13, #37253
-; CHECK-NEXT:    mov w10, #-124
-; CHECK-NEXT:    smov w12, v0.h[0]
-; CHECK-NEXT:    movk w13, #44150, lsl #16
-; CHECK-NEXT:    msub w8, w9, w10, w8
-; CHECK-NEXT:    smull x10, w12, w13
-; CHECK-NEXT:    lsr x10, x10, #32
-; CHECK-NEXT:    add w10, w10, w12
-; CHECK-NEXT:    asr w13, w10, #6
-; CHECK-NEXT:    mov w9, #95
-; CHECK-NEXT:    add w10, w13, w10, lsr #31
-; CHECK-NEXT:    msub w9, w10, w9, w12
-; CHECK-NEXT:    mov w10, #63249
-; CHECK-NEXT:    smov w13, v0.h[3]
-; CHECK-NEXT:    movk w10, #48808, lsl #16
-; CHECK-NEXT:    smull x10, w13, w10
-; CHECK-NEXT:    lsr x12, x10, #63
-; CHECK-NEXT:    asr x10, x10, #40
-; CHECK-NEXT:    fmov s0, w9
-; CHECK-NEXT:    add w10, w10, w12
-; CHECK-NEXT:    mov v0.h[1], w8
-; CHECK-NEXT:    mov w8, #-1003
-; CHECK-NEXT:    mov v0.h[2], w11
-; CHECK-NEXT:    msub w8, w10, w8, w13
-; CHECK-NEXT:    mov v0.h[3], w8
-; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
+; CHECK-NEXT:    adrp x8, .LCPI0_0
+; CHECK-NEXT:    ldr q1, [x8, :lo12:.LCPI0_0]
+; CHECK-NEXT:    adrp x8, .LCPI0_1
+; CHECK-NEXT:    ldr q2, [x8, :lo12:.LCPI0_1]
+; CHECK-NEXT:    sshll v3.4s, v0.4h, #0
+; CHECK-NEXT:    adrp x8, .LCPI0_2
+; CHECK-NEXT:    mul v1.4s, v3.4s, v1.4s
+; CHECK-NEXT:    umull2 v3.2d, v1.4s, v2.4s
+; CHECK-NEXT:    umull v1.2d, v1.2s, v2.2s
+; CHECK-NEXT:    ldr d2, [x8, :lo12:.LCPI0_2]
+; CHECK-NEXT:    sshr v0.4h, v0.4h, #15
+; CHECK-NEXT:    uzp2 v1.4s, v1.4s, v3.4s
+; CHECK-NEXT:    xtn v1.4h, v1.4s
+; CHECK-NEXT:    and v0.8b, v0.8b, v2.8b
+; CHECK-NEXT:    sub v0.4h, v1.4h, v0.4h
 ; CHECK-NEXT:    ret
   %1 = srem <4 x i16> %x, <i16 95, i16 -124, i16 98, i16 -1003>
   ret <4 x i16> %1
@@ -56,43 +27,20 @@ define <4 x i16> @fold_srem_vec_1(<4 x i16> %x) {
 define <4 x i16> @fold_srem_vec_2(<4 x i16> %x) {
 ; CHECK-LABEL: fold_srem_vec_2:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mov w9, #37253
-; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
-; CHECK-NEXT:    smov w8, v0.h[1]
-; CHECK-NEXT:    movk w9, #44150, lsl #16
-; CHECK-NEXT:    smov w10, v0.h[0]
-; CHECK-NEXT:    smull x13, w8, w9
-; CHECK-NEXT:    smov w11, v0.h[2]
-; CHECK-NEXT:    smull x14, w10, w9
-; CHECK-NEXT:    lsr x13, x13, #32
-; CHECK-NEXT:    smov w12, v0.h[3]
-; CHECK-NEXT:    smull x15, w11, w9
-; CHECK-NEXT:    lsr x14, x14, #32
-; CHECK-NEXT:    add w13, w13, w8
-; CHECK-NEXT:    smull x9, w12, w9
-; CHECK-NEXT:    lsr x15, x15, #32
-; CHECK-NEXT:    add w14, w14, w10
-; CHECK-NEXT:    asr w16, w13, #6
-; CHECK-NEXT:    lsr x9, x9, #32
-; CHECK-NEXT:    add w15, w15, w11
-; CHECK-NEXT:    add w13, w16, w13, lsr #31
-; CHECK-NEXT:    asr w16, w14, #6
-; CHECK-NEXT:    add w9, w9, w12
-; CHECK-NEXT:    add w14, w16, w14, lsr #31
-; CHECK-NEXT:    asr w16, w15, #6
-; CHECK-NEXT:    add w15, w16, w15, lsr #31
-; CHECK-NEXT:    asr w16, w9, #6
-; CHECK-NEXT:    add w9, w16, w9, lsr #31
-; CHECK-NEXT:    mov w16, #95
-; CHECK-NEXT:    msub w10, w14, w16, w10
-; CHECK-NEXT:    msub w8, w13, w16, w8
-; CHECK-NEXT:    fmov s0, w10
-; CHECK-NEXT:    msub w11, w15, w16, w11
-; CHECK-NEXT:    mov v0.h[1], w8
-; CHECK-NEXT:    mov v0.h[2], w11
-; CHECK-NEXT:    msub w8, w9, w16, w12
-; CHECK-NEXT:    mov v0.h[3], w8
-; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
+; CHECK-NEXT:    mov w8, #55879
+; CHECK-NEXT:    movk w8, #689, lsl #16
+; CHECK-NEXT:    sshll v1.4s, v0.4h, #0
+; CHECK-NEXT:    dup v4.4s, w8
+; CHECK-NEXT:    movi v2.4s, #95
+; CHECK-NEXT:    mul v1.4s, v1.4s, v4.4s
+; CHECK-NEXT:    umull2 v4.2d, v1.4s, v2.4s
+; CHECK-NEXT:    umull v1.2d, v1.2s, v2.2s
+; CHECK-NEXT:    sshr v0.4h, v0.4h, #15
+; CHECK-NEXT:    movi v3.4h, #94
+; CHECK-NEXT:    uzp2 v1.4s, v1.4s, v4.4s
+; CHECK-NEXT:    xtn v1.4h, v1.4s
+; CHECK-NEXT:    and v0.8b, v0.8b, v3.8b
+; CHECK-NEXT:    sub v0.4h, v1.4h, v0.4h
 ; CHECK-NEXT:    ret
   %1 = srem <4 x i16> %x, <i16 95, i16 95, i16 95, i16 95>
   ret <4 x i16> %1
@@ -155,27 +103,30 @@ define <4 x i16> @combine_srem_sdiv(<4 x i16> %x) {
 define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; CHECK-LABEL: dont_fold_srem_power_of_two:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    mov x12, #7589
+; CHECK-NEXT:    movk x12, #4139, lsl #16
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
+; CHECK-NEXT:    smov w10, v0.h[3]
+; CHECK-NEXT:    mov w11, #94
+; CHECK-NEXT:    movk x12, #55878, lsl #32
+; CHECK-NEXT:    movk x12, #689, lsl #48
+; CHECK-NEXT:    and w11, w11, w10, asr #31
+; CHECK-NEXT:    sxtw x10, w10
 ; CHECK-NEXT:    smov w8, v0.h[1]
+; CHECK-NEXT:    mul x10, x10, x12
+; CHECK-NEXT:    mov w12, #95
+; CHECK-NEXT:    umulh x10, x10, x12
 ; CHECK-NEXT:    add w12, w8, #31 // =31
 ; CHECK-NEXT:    cmp w8, #0 // =0
-; CHECK-NEXT:    mov w11, #37253
 ; CHECK-NEXT:    csel w12, w12, w8, lt
 ; CHECK-NEXT:    smov w9, v0.h[0]
-; CHECK-NEXT:    smov w10, v0.h[3]
-; CHECK-NEXT:    movk w11, #44150, lsl #16
 ; CHECK-NEXT:    and w12, w12, #0xffffffe0
 ; CHECK-NEXT:    sub w8, w8, w12
 ; CHECK-NEXT:    add w12, w9, #63 // =63
-; CHECK-NEXT:    smull x11, w10, w11
 ; CHECK-NEXT:    cmp w9, #0 // =0
-; CHECK-NEXT:    lsr x11, x11, #32
 ; CHECK-NEXT:    csel w12, w12, w9, lt
-; CHECK-NEXT:    add w11, w11, w10
 ; CHECK-NEXT:    and w12, w12, #0xffffffc0
 ; CHECK-NEXT:    sub w9, w9, w12
-; CHECK-NEXT:    asr w12, w11, #6
-; CHECK-NEXT:    add w11, w12, w11, lsr #31
 ; CHECK-NEXT:    smov w12, v0.h[2]
 ; CHECK-NEXT:    fmov s0, w9
 ; CHECK-NEXT:    add w9, w12, #7 // =7
@@ -184,9 +135,8 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 ; CHECK-NEXT:    and w9, w9, #0xfffffff8
 ; CHECK-NEXT:    sub w9, w12, w9
 ; CHECK-NEXT:    mov v0.h[1], w8
-; CHECK-NEXT:    mov w8, #95
 ; CHECK-NEXT:    mov v0.h[2], w9
-; CHECK-NEXT:    msub w8, w11, w8, w10
+; CHECK-NEXT:    sub w8, w10, w11
 ; CHECK-NEXT:    mov v0.h[3], w8
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
 ; CHECK-NEXT:    ret
@@ -198,39 +148,46 @@ define <4 x i16> @dont_fold_srem_power_of_two(<4 x i16> %x) {
 define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
 ; CHECK-LABEL: dont_fold_srem_one:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mov w9, #17097
+; CHECK-NEXT:    mov x13, #17236
+; CHECK-NEXT:    movk x13, #18438, lsl #16
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
-; CHECK-NEXT:    smov w8, v0.h[2]
-; CHECK-NEXT:    movk w9, #45590, lsl #16
-; CHECK-NEXT:    smull x9, w8, w9
-; CHECK-NEXT:    lsr x9, x9, #32
-; CHECK-NEXT:    add w9, w9, w8
-; CHECK-NEXT:    asr w12, w9, #4
-; CHECK-NEXT:    add w9, w12, w9, lsr #31
-; CHECK-NEXT:    mov w12, #30865
-; CHECK-NEXT:    mov w10, #23
+; CHECK-NEXT:    mov x10, #45591
 ; CHECK-NEXT:    smov w11, v0.h[1]
-; CHECK-NEXT:    movk w12, #51306, lsl #16
-; CHECK-NEXT:    msub w8, w9, w10, w8
-; CHECK-NEXT:    smull x10, w11, w12
-; CHECK-NEXT:    lsr x10, x10, #32
-; CHECK-NEXT:    add w10, w10, w11
-; CHECK-NEXT:    asr w12, w10, #9
-; CHECK-NEXT:    mov w9, #654
-; CHECK-NEXT:    add w10, w12, w10, lsr #31
-; CHECK-NEXT:    msub w9, w10, w9, w11
-; CHECK-NEXT:    mov w10, #47143
-; CHECK-NEXT:    smov w12, v0.h[3]
-; CHECK-NEXT:    movk w10, #24749, lsl #16
-; CHECK-NEXT:    smull x10, w12, w10
-; CHECK-NEXT:    lsr x11, x10, #63
-; CHECK-NEXT:    asr x10, x10, #43
+; CHECK-NEXT:    mov w12, #653
+; CHECK-NEXT:    movk x13, #13628, lsl #32
+; CHECK-NEXT:    movk x10, #34192, lsl #16
+; CHECK-NEXT:    movk x13, #100, lsl #48
+; CHECK-NEXT:    and w12, w12, w11, asr #31
+; CHECK-NEXT:    sxtw x11, w11
+; CHECK-NEXT:    smov w8, v0.h[2]
+; CHECK-NEXT:    mov w9, #22
+; CHECK-NEXT:    movk x10, #25644, lsl #32
+; CHECK-NEXT:    mul x11, x11, x13
+; CHECK-NEXT:    mov x13, #48291
+; CHECK-NEXT:    movk x10, #2849, lsl #48
+; CHECK-NEXT:    and w9, w9, w8, asr #31
+; CHECK-NEXT:    sxtw x8, w8
+; CHECK-NEXT:    movk x13, #1244, lsl #16
+; CHECK-NEXT:    smov w14, v0.h[3]
+; CHECK-NEXT:    mul x8, x8, x10
+; CHECK-NEXT:    mov w10, #5422
+; CHECK-NEXT:    movk x13, #5559, lsl #32
+; CHECK-NEXT:    movk x13, #12, lsl #48
+; CHECK-NEXT:    and w10, w10, w14, asr #31
+; CHECK-NEXT:    sxtw x14, w14
+; CHECK-NEXT:    mul x13, x14, x13
+; CHECK-NEXT:    mov w14, #23
+; CHECK-NEXT:    umulh x8, x8, x14
+; CHECK-NEXT:    mov w14, #654
+; CHECK-NEXT:    umulh x11, x11, x14
+; CHECK-NEXT:    mov w14, #5423
+; CHECK-NEXT:    sub w8, w8, w9
+; CHECK-NEXT:    sub w9, w11, w12
 ; CHECK-NEXT:    movi d0, #0000000000000000
-; CHECK-NEXT:    add w10, w10, w11
+; CHECK-NEXT:    umulh x13, x13, x14
 ; CHECK-NEXT:    mov v0.h[1], w9
-; CHECK-NEXT:    mov w9, #5423
 ; CHECK-NEXT:    mov v0.h[2], w8
-; CHECK-NEXT:    msub w8, w10, w9, w12
+; CHECK-NEXT:    sub w8, w13, w10
 ; CHECK-NEXT:    mov v0.h[3], w8
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
 ; CHECK-NEXT:    ret
@@ -242,36 +199,41 @@ define <4 x i16> @dont_fold_srem_one(<4 x i16> %x) {
 define <4 x i16> @dont_fold_srem_i16_smax(<4 x i16> %x) {
 ; CHECK-LABEL: dont_fold_srem_i16_smax:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mov w10, #17097
+; CHECK-NEXT:    mov x11, #45591
+; CHECK-NEXT:    movk x11, #34192, lsl #16
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
 ; CHECK-NEXT:    smov w9, v0.h[2]
-; CHECK-NEXT:    movk w10, #45590, lsl #16
-; CHECK-NEXT:    smull x10, w9, w10
-; CHECK-NEXT:    lsr x10, x10, #32
-; CHECK-NEXT:    add w10, w10, w9
-; CHECK-NEXT:    asr w12, w10, #4
-; CHECK-NEXT:    mov w11, #23
-; CHECK-NEXT:    add w10, w12, w10, lsr #31
-; CHECK-NEXT:    msub w9, w10, w11, w9
-; CHECK-NEXT:    mov w10, #47143
+; CHECK-NEXT:    mov w10, #22
+; CHECK-NEXT:    movk x11, #25644, lsl #32
+; CHECK-NEXT:    movk x11, #2849, lsl #48
+; CHECK-NEXT:    and w10, w10, w9, asr #31
+; CHECK-NEXT:    sxtw x9, w9
+; CHECK-NEXT:    mul x9, x9, x11
+; CHECK-NEXT:    mov x11, #48291
+; CHECK-NEXT:    movk x11, #1244, lsl #16
 ; CHECK-NEXT:    smov w12, v0.h[3]
-; CHECK-NEXT:    movk w10, #24749, lsl #16
-; CHECK-NEXT:    smull x10, w12, w10
-; CHECK-NEXT:    lsr x11, x10, #63
-; CHECK-NEXT:    asr x10, x10, #43
+; CHECK-NEXT:    mov w13, #5422
+; CHECK-NEXT:    movk x11, #5559, lsl #32
+; CHECK-NEXT:    movk x11, #12, lsl #48
+; CHECK-NEXT:    and w13, w13, w12, asr #31
+; CHECK-NEXT:    sxtw x12, w12
+; CHECK-NEXT:    mul x11, x12, x11
+; CHECK-NEXT:    mov w12, #23
+; CHECK-NEXT:    umulh x9, x9, x12
+; CHECK-NEXT:    mov w12, #5423
 ; CHECK-NEXT:    smov w8, v0.h[1]
-; CHECK-NEXT:    add w10, w10, w11
-; CHECK-NEXT:    mov w11, #32767
-; CHECK-NEXT:    add w11, w8, w11
+; CHECK-NEXT:    umulh x11, x11, x12
+; CHECK-NEXT:    mov w12, #32767
+; CHECK-NEXT:    add w12, w8, w12
 ; CHECK-NEXT:    cmp w8, #0 // =0
-; CHECK-NEXT:    csel w11, w11, w8, lt
-; CHECK-NEXT:    and w11, w11, #0xffff8000
-; CHECK-NEXT:    sub w8, w8, w11
+; CHECK-NEXT:    csel w12, w12, w8, lt
+; CHECK-NEXT:    and w12, w12, #0xffff8000
+; CHECK-NEXT:    sub w8, w8, w12
 ; CHECK-NEXT:    movi d0, #0000000000000000
+; CHECK-NEXT:    sub w9, w9, w10
 ; CHECK-NEXT:    mov v0.h[1], w8
-; CHECK-NEXT:    mov w8, #5423
 ; CHECK-NEXT:    mov v0.h[2], w9
-; CHECK-NEXT:    msub w8, w10, w8, w12
+; CHECK-NEXT:    sub w8, w11, w13
 ; CHECK-NEXT:    mov v0.h[3], w8
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
 ; CHECK-NEXT:    ret
