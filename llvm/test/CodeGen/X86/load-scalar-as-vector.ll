@@ -520,29 +520,21 @@ define <2 x i64> @urem_op0_constant(i64* %p) nounwind {
 define <16 x i8> @urem_op1_constant(i8* %p) nounwind {
 ; SSE-LABEL: urem_op1_constant:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movb (%rdi), %al
-; SSE-NEXT:    movl %eax, %ecx
-; SSE-NEXT:    shrb %cl
-; SSE-NEXT:    movzbl %cl, %ecx
-; SSE-NEXT:    imull $49, %ecx, %ecx
-; SSE-NEXT:    shrl $10, %ecx
-; SSE-NEXT:    imull $42, %ecx, %ecx
-; SSE-NEXT:    subb %cl, %al
-; SSE-NEXT:    movzbl %al, %eax
+; SSE-NEXT:    movzbl (%rdi), %eax
+; SSE-NEXT:    imull $1561, %eax, %eax # imm = 0x619
+; SSE-NEXT:    movzwl %ax, %eax
+; SSE-NEXT:    imull $42, %eax, %eax
+; SSE-NEXT:    shrl $16, %eax
 ; SSE-NEXT:    movd %eax, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: urem_op1_constant:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    movb (%rdi), %al
-; AVX-NEXT:    movl %eax, %ecx
-; AVX-NEXT:    shrb %cl
-; AVX-NEXT:    movzbl %cl, %ecx
-; AVX-NEXT:    imull $49, %ecx, %ecx
-; AVX-NEXT:    shrl $10, %ecx
-; AVX-NEXT:    imull $42, %ecx, %ecx
-; AVX-NEXT:    subb %cl, %al
-; AVX-NEXT:    movzbl %al, %eax
+; AVX-NEXT:    movzbl (%rdi), %eax
+; AVX-NEXT:    imull $1561, %eax, %eax # imm = 0x619
+; AVX-NEXT:    movzwl %ax, %eax
+; AVX-NEXT:    imull $42, %eax, %eax
+; AVX-NEXT:    shrl $16, %eax
 ; AVX-NEXT:    vmovd %eax, %xmm0
 ; AVX-NEXT:    retq
   %x = load i8, i8* %p

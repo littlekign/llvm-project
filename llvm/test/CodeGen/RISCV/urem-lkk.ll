@@ -8,18 +8,22 @@
 ; RUN: llc -mtriple=riscv64 -mattr=+m -verify-machineinstrs < %s \
 ; RUN:   | FileCheck -check-prefixes=CHECK,RV64IM %s
 
-define i32 @fold_urem_positive_odd(i32 %x) nounwind {
-; RV32I-LABEL: fold_urem_positive_odd:
+define i32 @lower_urem_positive_odd(i32 %x) {
+; RV32I-LABEL: lower_urem_positive_odd:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    addi sp, sp, -16
+; RV32I-NEXT:    .cfi_def_cfa_offset 16
 ; RV32I-NEXT:    sw ra, 12(sp)
+; RV32I-NEXT:    .cfi_offset ra, -4
 ; RV32I-NEXT:    addi a1, zero, 95
 ; RV32I-NEXT:    call __umodsi3
 ; RV32I-NEXT:    lw ra, 12(sp)
+; RV32I-NEXT:    .cfi_restore ra
 ; RV32I-NEXT:    addi sp, sp, 16
+; RV32I-NEXT:    .cfi_def_cfa_offset 0
 ; RV32I-NEXT:    ret
 ;
-; RV32IM-LABEL: fold_urem_positive_odd:
+; RV32IM-LABEL: lower_urem_positive_odd:
 ; RV32IM:       # %bb.0:
 ; RV32IM-NEXT:    lui a1, 364242
 ; RV32IM-NEXT:    addi a1, a1, 777
@@ -31,58 +35,61 @@ define i32 @fold_urem_positive_odd(i32 %x) nounwind {
 ; RV32IM-NEXT:    addi a2, zero, 95
 ; RV32IM-NEXT:    mul a1, a1, a2
 ; RV32IM-NEXT:    sub a0, a0, a1
+; RV32IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV32IM-NEXT:    ret
 ;
-; RV64I-LABEL: fold_urem_positive_odd:
+; RV64I-LABEL: lower_urem_positive_odd:
 ; RV64I:       # %bb.0:
 ; RV64I-NEXT:    addi sp, sp, -16
+; RV64I-NEXT:    .cfi_def_cfa_offset 16
 ; RV64I-NEXT:    sd ra, 8(sp)
+; RV64I-NEXT:    .cfi_offset ra, -8
 ; RV64I-NEXT:    slli a0, a0, 32
 ; RV64I-NEXT:    srli a0, a0, 32
 ; RV64I-NEXT:    addi a1, zero, 95
 ; RV64I-NEXT:    call __umoddi3
 ; RV64I-NEXT:    ld ra, 8(sp)
+; RV64I-NEXT:    .cfi_restore ra
 ; RV64I-NEXT:    addi sp, sp, 16
+; RV64I-NEXT:    .cfi_def_cfa_offset 0
 ; RV64I-NEXT:    ret
 ;
-; RV64IM-LABEL: fold_urem_positive_odd:
+; RV64IM-LABEL: lower_urem_positive_odd:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    slli a0, a0, 32
 ; RV64IM-NEXT:    srli a0, a0, 32
-; RV64IM-NEXT:    lui a1, 1423
-; RV64IM-NEXT:    addiw a1, a1, -733
+; RV64IM-NEXT:    lui a1, 176602
+; RV64IM-NEXT:    addiw a1, a1, 1121
 ; RV64IM-NEXT:    slli a1, a1, 15
-; RV64IM-NEXT:    addi a1, a1, 1035
+; RV64IM-NEXT:    addi a1, a1, 345
 ; RV64IM-NEXT:    slli a1, a1, 13
-; RV64IM-NEXT:    addi a1, a1, -1811
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, 561
-; RV64IM-NEXT:    mulhu a1, a0, a1
-; RV64IM-NEXT:    sub a2, a0, a1
-; RV64IM-NEXT:    srli a2, a2, 1
-; RV64IM-NEXT:    add a1, a2, a1
-; RV64IM-NEXT:    srli a1, a1, 6
-; RV64IM-NEXT:    addi a2, zero, 95
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    addi a1, a1, -603
+; RV64IM-NEXT:    mul a0, a0, a1
+; RV64IM-NEXT:    addi a1, zero, 95
+; RV64IM-NEXT:    mulhu a0, a0, a1
+; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = urem i32 %x, 95
   ret i32 %1
 }
 
 
-define i32 @fold_urem_positive_even(i32 %x) nounwind {
-; RV32I-LABEL: fold_urem_positive_even:
+define i32 @lower_urem_positive_even(i32 %x) {
+; RV32I-LABEL: lower_urem_positive_even:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    addi sp, sp, -16
+; RV32I-NEXT:    .cfi_def_cfa_offset 16
 ; RV32I-NEXT:    sw ra, 12(sp)
+; RV32I-NEXT:    .cfi_offset ra, -4
 ; RV32I-NEXT:    addi a1, zero, 1060
 ; RV32I-NEXT:    call __umodsi3
 ; RV32I-NEXT:    lw ra, 12(sp)
+; RV32I-NEXT:    .cfi_restore ra
 ; RV32I-NEXT:    addi sp, sp, 16
+; RV32I-NEXT:    .cfi_def_cfa_offset 0
 ; RV32I-NEXT:    ret
 ;
-; RV32IM-LABEL: fold_urem_positive_even:
+; RV32IM-LABEL: lower_urem_positive_even:
 ; RV32IM:       # %bb.0:
 ; RV32IM-NEXT:    lui a1, 1012964
 ; RV32IM-NEXT:    addi a1, a1, -61
@@ -91,51 +98,57 @@ define i32 @fold_urem_positive_even(i32 %x) nounwind {
 ; RV32IM-NEXT:    addi a2, zero, 1060
 ; RV32IM-NEXT:    mul a1, a1, a2
 ; RV32IM-NEXT:    sub a0, a0, a1
+; RV32IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV32IM-NEXT:    ret
 ;
-; RV64I-LABEL: fold_urem_positive_even:
+; RV64I-LABEL: lower_urem_positive_even:
 ; RV64I:       # %bb.0:
 ; RV64I-NEXT:    addi sp, sp, -16
+; RV64I-NEXT:    .cfi_def_cfa_offset 16
 ; RV64I-NEXT:    sd ra, 8(sp)
+; RV64I-NEXT:    .cfi_offset ra, -8
 ; RV64I-NEXT:    slli a0, a0, 32
 ; RV64I-NEXT:    srli a0, a0, 32
 ; RV64I-NEXT:    addi a1, zero, 1060
 ; RV64I-NEXT:    call __umoddi3
 ; RV64I-NEXT:    ld ra, 8(sp)
+; RV64I-NEXT:    .cfi_restore ra
 ; RV64I-NEXT:    addi sp, sp, 16
+; RV64I-NEXT:    .cfi_def_cfa_offset 0
 ; RV64I-NEXT:    ret
 ;
-; RV64IM-LABEL: fold_urem_positive_even:
+; RV64IM-LABEL: lower_urem_positive_even:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    slli a0, a0, 32
 ; RV64IM-NEXT:    srli a0, a0, 32
-; RV64IM-NEXT:    lui a1, 1048020
+; RV64IM-NEXT:    lui a1, 15828
 ; RV64IM-NEXT:    addiw a1, a1, -1793
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, 139
-; RV64IM-NEXT:    slli a1, a1, 14
-; RV64IM-NEXT:    addi a1, a1, 1793
-; RV64IM-NEXT:    slli a1, a1, 12
-; RV64IM-NEXT:    addi a1, a1, -139
-; RV64IM-NEXT:    mulhu a1, a0, a1
-; RV64IM-NEXT:    srli a1, a1, 10
-; RV64IM-NEXT:    addi a2, zero, 1060
-; RV64IM-NEXT:    mul a1, a1, a2
-; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    slli a1, a1, 15
+; RV64IM-NEXT:    addi a1, a1, 1113
+; RV64IM-NEXT:    slli a1, a1, 13
+; RV64IM-NEXT:    addi a1, a1, -1020
+; RV64IM-NEXT:    mul a0, a0, a1
+; RV64IM-NEXT:    addi a1, zero, 1060
+; RV64IM-NEXT:    mulhu a0, a0, a1
+; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = urem i32 %x, 1060
   ret i32 %1
 }
 
 
-; Don't fold if we can combine urem with udiv.
-define i32 @combine_urem_udiv(i32 %x) nounwind {
+; Don't lower if we can combine urem with udiv.
+define i32 @combine_urem_udiv(i32 %x) {
 ; RV32I-LABEL: combine_urem_udiv:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    addi sp, sp, -16
+; RV32I-NEXT:    .cfi_def_cfa_offset 16
 ; RV32I-NEXT:    sw ra, 12(sp)
 ; RV32I-NEXT:    sw s0, 8(sp)
 ; RV32I-NEXT:    sw s1, 4(sp)
+; RV32I-NEXT:    .cfi_offset ra, -4
+; RV32I-NEXT:    .cfi_offset s0, -8
+; RV32I-NEXT:    .cfi_offset s1, -12
 ; RV32I-NEXT:    mv s0, a0
 ; RV32I-NEXT:    addi a1, zero, 95
 ; RV32I-NEXT:    call __umodsi3
@@ -147,7 +160,11 @@ define i32 @combine_urem_udiv(i32 %x) nounwind {
 ; RV32I-NEXT:    lw s1, 4(sp)
 ; RV32I-NEXT:    lw s0, 8(sp)
 ; RV32I-NEXT:    lw ra, 12(sp)
+; RV32I-NEXT:    .cfi_restore ra
+; RV32I-NEXT:    .cfi_restore s0
+; RV32I-NEXT:    .cfi_restore s1
 ; RV32I-NEXT:    addi sp, sp, 16
+; RV32I-NEXT:    .cfi_def_cfa_offset 0
 ; RV32I-NEXT:    ret
 ;
 ; RV32IM-LABEL: combine_urem_udiv:
@@ -163,14 +180,19 @@ define i32 @combine_urem_udiv(i32 %x) nounwind {
 ; RV32IM-NEXT:    mul a2, a1, a2
 ; RV32IM-NEXT:    sub a0, a0, a2
 ; RV32IM-NEXT:    add a0, a0, a1
+; RV32IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV32IM-NEXT:    ret
 ;
 ; RV64I-LABEL: combine_urem_udiv:
 ; RV64I:       # %bb.0:
 ; RV64I-NEXT:    addi sp, sp, -32
+; RV64I-NEXT:    .cfi_def_cfa_offset 32
 ; RV64I-NEXT:    sd ra, 24(sp)
 ; RV64I-NEXT:    sd s0, 16(sp)
 ; RV64I-NEXT:    sd s1, 8(sp)
+; RV64I-NEXT:    .cfi_offset ra, -8
+; RV64I-NEXT:    .cfi_offset s0, -16
+; RV64I-NEXT:    .cfi_offset s1, -24
 ; RV64I-NEXT:    slli a0, a0, 32
 ; RV64I-NEXT:    srli s0, a0, 32
 ; RV64I-NEXT:    addi a1, zero, 95
@@ -184,7 +206,11 @@ define i32 @combine_urem_udiv(i32 %x) nounwind {
 ; RV64I-NEXT:    ld s1, 8(sp)
 ; RV64I-NEXT:    ld s0, 16(sp)
 ; RV64I-NEXT:    ld ra, 24(sp)
+; RV64I-NEXT:    .cfi_restore ra
+; RV64I-NEXT:    .cfi_restore s0
+; RV64I-NEXT:    .cfi_restore s1
 ; RV64I-NEXT:    addi sp, sp, 32
+; RV64I-NEXT:    .cfi_def_cfa_offset 0
 ; RV64I-NEXT:    ret
 ;
 ; RV64IM-LABEL: combine_urem_udiv:
@@ -208,6 +234,7 @@ define i32 @combine_urem_udiv(i32 %x) nounwind {
 ; RV64IM-NEXT:    mul a2, a1, a2
 ; RV64IM-NEXT:    sub a0, a0, a2
 ; RV64IM-NEXT:    add a0, a0, a1
+; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = urem i32 %x, 95
   %2 = udiv i32 %x, 95
@@ -215,70 +242,85 @@ define i32 @combine_urem_udiv(i32 %x) nounwind {
   ret i32 %3
 }
 
-; Don't fold for divisors that are a power of two.
-define i32 @dont_fold_urem_power_of_two(i32 %x) nounwind {
-; CHECK-LABEL: dont_fold_urem_power_of_two:
+; Don't lower for divisors that are a power of two.
+define i32 @dont_lower_urem_power_of_two(i32 %x) {
+; CHECK-LABEL: dont_lower_urem_power_of_two:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    andi a0, a0, 63
+; CHECK-NEXT:    .cfi_def_cfa_offset 0
 ; CHECK-NEXT:    ret
   %1 = urem i32 %x, 64
   ret i32 %1
 }
 
-; Don't fold if the divisor is one.
-define i32 @dont_fold_urem_one(i32 %x) nounwind {
-; CHECK-LABEL: dont_fold_urem_one:
+; Don't lower if the divisor is one.
+define i32 @dont_lower_urem_one(i32 %x) {
+; CHECK-LABEL: dont_lower_urem_one:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    mv a0, zero
+; CHECK-NEXT:    .cfi_def_cfa_offset 0
 ; CHECK-NEXT:    ret
   %1 = urem i32 %x, 1
   ret i32 %1
 }
 
-; Don't fold if the divisor is 2^32.
-define i32 @dont_fold_urem_i32_umax(i32 %x) nounwind {
-; CHECK-LABEL: dont_fold_urem_i32_umax:
+; Don't lower if the divisor is 2^32.
+define i32 @dont_lower_urem_i32_umax(i32 %x) {
+; CHECK-LABEL: dont_lower_urem_i32_umax:
 ; CHECK:       # %bb.0:
+; CHECK-NEXT:    .cfi_def_cfa_offset 0
 ; CHECK-NEXT:    ret
   %1 = urem i32 %x, 4294967296
   ret i32 %1
 }
 
-; Don't fold i64 urem
-define i64 @dont_fold_urem_i64(i64 %x) nounwind {
-; RV32I-LABEL: dont_fold_urem_i64:
+; Don't lower i64 urem
+define i64 @dont_lower_urem_i64(i64 %x) {
+; RV32I-LABEL: dont_lower_urem_i64:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    addi sp, sp, -16
+; RV32I-NEXT:    .cfi_def_cfa_offset 16
 ; RV32I-NEXT:    sw ra, 12(sp)
+; RV32I-NEXT:    .cfi_offset ra, -4
 ; RV32I-NEXT:    addi a2, zero, 98
 ; RV32I-NEXT:    mv a3, zero
 ; RV32I-NEXT:    call __umoddi3
 ; RV32I-NEXT:    lw ra, 12(sp)
+; RV32I-NEXT:    .cfi_restore ra
 ; RV32I-NEXT:    addi sp, sp, 16
+; RV32I-NEXT:    .cfi_def_cfa_offset 0
 ; RV32I-NEXT:    ret
 ;
-; RV32IM-LABEL: dont_fold_urem_i64:
+; RV32IM-LABEL: dont_lower_urem_i64:
 ; RV32IM:       # %bb.0:
 ; RV32IM-NEXT:    addi sp, sp, -16
+; RV32IM-NEXT:    .cfi_def_cfa_offset 16
 ; RV32IM-NEXT:    sw ra, 12(sp)
+; RV32IM-NEXT:    .cfi_offset ra, -4
 ; RV32IM-NEXT:    addi a2, zero, 98
 ; RV32IM-NEXT:    mv a3, zero
 ; RV32IM-NEXT:    call __umoddi3
 ; RV32IM-NEXT:    lw ra, 12(sp)
+; RV32IM-NEXT:    .cfi_restore ra
 ; RV32IM-NEXT:    addi sp, sp, 16
+; RV32IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV32IM-NEXT:    ret
 ;
-; RV64I-LABEL: dont_fold_urem_i64:
+; RV64I-LABEL: dont_lower_urem_i64:
 ; RV64I:       # %bb.0:
 ; RV64I-NEXT:    addi sp, sp, -16
+; RV64I-NEXT:    .cfi_def_cfa_offset 16
 ; RV64I-NEXT:    sd ra, 8(sp)
+; RV64I-NEXT:    .cfi_offset ra, -8
 ; RV64I-NEXT:    addi a1, zero, 98
 ; RV64I-NEXT:    call __umoddi3
 ; RV64I-NEXT:    ld ra, 8(sp)
+; RV64I-NEXT:    .cfi_restore ra
 ; RV64I-NEXT:    addi sp, sp, 16
+; RV64I-NEXT:    .cfi_def_cfa_offset 0
 ; RV64I-NEXT:    ret
 ;
-; RV64IM-LABEL: dont_fold_urem_i64:
+; RV64IM-LABEL: dont_lower_urem_i64:
 ; RV64IM:       # %bb.0:
 ; RV64IM-NEXT:    srli a1, a0, 1
 ; RV64IM-NEXT:    lui a2, 2675
@@ -294,7 +336,223 @@ define i64 @dont_fold_urem_i64(i64 %x) nounwind {
 ; RV64IM-NEXT:    addi a2, zero, 98
 ; RV64IM-NEXT:    mul a1, a1, a2
 ; RV64IM-NEXT:    sub a0, a0, a1
+; RV64IM-NEXT:    .cfi_def_cfa_offset 0
 ; RV64IM-NEXT:    ret
   %1 = urem i64 %x, 98
   ret i64 %1
+}
+
+@.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+
+declare dso_local i32 @printf(i8* nocapture readonly, ...) local_unnamed_addr #1
+
+define void @urem_loop(i32 %x) {
+; RV32I-LABEL: urem_loop:
+; RV32I:       # %bb.0: # %entry
+; RV32I-NEXT:    addi sp, sp, -16
+; RV32I-NEXT:    .cfi_def_cfa_offset 16
+; RV32I-NEXT:    sw ra, 12(sp)
+; RV32I-NEXT:    sw s0, 8(sp)
+; RV32I-NEXT:    sw s1, 4(sp)
+; RV32I-NEXT:    sw s2, 0(sp)
+; RV32I-NEXT:    .cfi_offset ra, -4
+; RV32I-NEXT:    .cfi_offset s0, -8
+; RV32I-NEXT:    .cfi_offset s1, -12
+; RV32I-NEXT:    .cfi_offset s2, -16
+; RV32I-NEXT:    mv s2, a0
+; RV32I-NEXT:    mv s1, zero
+; RV32I-NEXT:    addi a0, zero, 1
+; RV32I-NEXT:    lui a1, %hi(.L.str)
+; RV32I-NEXT:    addi s0, a1, %lo(.L.str)
+; RV32I-NEXT:  .LBB7_1: # %loop
+; RV32I-NEXT:    # =>This Inner Loop Header: Depth=1
+; RV32I-NEXT:    addi a1, zero, 95
+; RV32I-NEXT:    call __umodsi3
+; RV32I-NEXT:    add s1, a0, s1
+; RV32I-NEXT:    mv a0, s0
+; RV32I-NEXT:    mv a1, s1
+; RV32I-NEXT:    call printf
+; RV32I-NEXT:    bltu a0, s2, .LBB7_1
+; RV32I-NEXT:  # %bb.2: # %afterloop
+; RV32I-NEXT:    lw s2, 0(sp)
+; RV32I-NEXT:    lw s1, 4(sp)
+; RV32I-NEXT:    lw s0, 8(sp)
+; RV32I-NEXT:    lw ra, 12(sp)
+; RV32I-NEXT:    .cfi_restore ra
+; RV32I-NEXT:    .cfi_restore s0
+; RV32I-NEXT:    .cfi_restore s1
+; RV32I-NEXT:    .cfi_restore s2
+; RV32I-NEXT:    addi sp, sp, 16
+; RV32I-NEXT:    .cfi_def_cfa_offset 0
+; RV32I-NEXT:    ret
+;
+; RV32IM-LABEL: urem_loop:
+; RV32IM:       # %bb.0: # %entry
+; RV32IM-NEXT:    addi sp, sp, -32
+; RV32IM-NEXT:    .cfi_def_cfa_offset 32
+; RV32IM-NEXT:    sw ra, 28(sp)
+; RV32IM-NEXT:    sw s0, 24(sp)
+; RV32IM-NEXT:    sw s1, 20(sp)
+; RV32IM-NEXT:    sw s2, 16(sp)
+; RV32IM-NEXT:    sw s3, 12(sp)
+; RV32IM-NEXT:    sw s4, 8(sp)
+; RV32IM-NEXT:    .cfi_offset ra, -4
+; RV32IM-NEXT:    .cfi_offset s0, -8
+; RV32IM-NEXT:    .cfi_offset s1, -12
+; RV32IM-NEXT:    .cfi_offset s2, -16
+; RV32IM-NEXT:    .cfi_offset s3, -20
+; RV32IM-NEXT:    .cfi_offset s4, -24
+; RV32IM-NEXT:    mv s2, a0
+; RV32IM-NEXT:    mv s1, zero
+; RV32IM-NEXT:    addi a0, zero, 1
+; RV32IM-NEXT:    lui a1, 364242
+; RV32IM-NEXT:    addi s3, a1, 777
+; RV32IM-NEXT:    addi s4, zero, 95
+; RV32IM-NEXT:    lui a1, %hi(.L.str)
+; RV32IM-NEXT:    addi s0, a1, %lo(.L.str)
+; RV32IM-NEXT:  .LBB7_1: # %loop
+; RV32IM-NEXT:    # =>This Inner Loop Header: Depth=1
+; RV32IM-NEXT:    mulhu a1, a0, s3
+; RV32IM-NEXT:    sub a2, a0, a1
+; RV32IM-NEXT:    srli a2, a2, 1
+; RV32IM-NEXT:    add a1, a2, a1
+; RV32IM-NEXT:    srli a1, a1, 6
+; RV32IM-NEXT:    mul a1, a1, s4
+; RV32IM-NEXT:    sub a0, a0, a1
+; RV32IM-NEXT:    add s1, a0, s1
+; RV32IM-NEXT:    mv a0, s0
+; RV32IM-NEXT:    mv a1, s1
+; RV32IM-NEXT:    call printf
+; RV32IM-NEXT:    bltu a0, s2, .LBB7_1
+; RV32IM-NEXT:  # %bb.2: # %afterloop
+; RV32IM-NEXT:    lw s4, 8(sp)
+; RV32IM-NEXT:    lw s3, 12(sp)
+; RV32IM-NEXT:    lw s2, 16(sp)
+; RV32IM-NEXT:    lw s1, 20(sp)
+; RV32IM-NEXT:    lw s0, 24(sp)
+; RV32IM-NEXT:    lw ra, 28(sp)
+; RV32IM-NEXT:    .cfi_restore ra
+; RV32IM-NEXT:    .cfi_restore s0
+; RV32IM-NEXT:    .cfi_restore s1
+; RV32IM-NEXT:    .cfi_restore s2
+; RV32IM-NEXT:    .cfi_restore s3
+; RV32IM-NEXT:    .cfi_restore s4
+; RV32IM-NEXT:    addi sp, sp, 32
+; RV32IM-NEXT:    .cfi_def_cfa_offset 0
+; RV32IM-NEXT:    ret
+;
+; RV64I-LABEL: urem_loop:
+; RV64I:       # %bb.0: # %entry
+; RV64I-NEXT:    addi sp, sp, -32
+; RV64I-NEXT:    .cfi_def_cfa_offset 32
+; RV64I-NEXT:    sd ra, 24(sp)
+; RV64I-NEXT:    sd s0, 16(sp)
+; RV64I-NEXT:    sd s1, 8(sp)
+; RV64I-NEXT:    sd s2, 0(sp)
+; RV64I-NEXT:    .cfi_offset ra, -8
+; RV64I-NEXT:    .cfi_offset s0, -16
+; RV64I-NEXT:    .cfi_offset s1, -24
+; RV64I-NEXT:    .cfi_offset s2, -32
+; RV64I-NEXT:    mv a1, a0
+; RV64I-NEXT:    mv s0, zero
+; RV64I-NEXT:    addi a0, zero, 1
+; RV64I-NEXT:    lui a2, %hi(.L.str)
+; RV64I-NEXT:    addi s2, a2, %lo(.L.str)
+; RV64I-NEXT:    sext.w s1, a1
+; RV64I-NEXT:  .LBB7_1: # %loop
+; RV64I-NEXT:    # =>This Inner Loop Header: Depth=1
+; RV64I-NEXT:    slli a0, a0, 32
+; RV64I-NEXT:    srli a0, a0, 32
+; RV64I-NEXT:    addi a1, zero, 95
+; RV64I-NEXT:    call __umoddi3
+; RV64I-NEXT:    addw s0, a0, s0
+; RV64I-NEXT:    mv a0, s2
+; RV64I-NEXT:    mv a1, s0
+; RV64I-NEXT:    call printf
+; RV64I-NEXT:    sext.w a1, a0
+; RV64I-NEXT:    bltu a1, s1, .LBB7_1
+; RV64I-NEXT:  # %bb.2: # %afterloop
+; RV64I-NEXT:    ld s2, 0(sp)
+; RV64I-NEXT:    ld s1, 8(sp)
+; RV64I-NEXT:    ld s0, 16(sp)
+; RV64I-NEXT:    ld ra, 24(sp)
+; RV64I-NEXT:    .cfi_restore ra
+; RV64I-NEXT:    .cfi_restore s0
+; RV64I-NEXT:    .cfi_restore s1
+; RV64I-NEXT:    .cfi_restore s2
+; RV64I-NEXT:    addi sp, sp, 32
+; RV64I-NEXT:    .cfi_def_cfa_offset 0
+; RV64I-NEXT:    ret
+;
+; RV64IM-LABEL: urem_loop:
+; RV64IM:       # %bb.0: # %entry
+; RV64IM-NEXT:    addi sp, sp, -48
+; RV64IM-NEXT:    .cfi_def_cfa_offset 48
+; RV64IM-NEXT:    sd ra, 40(sp)
+; RV64IM-NEXT:    sd s0, 32(sp)
+; RV64IM-NEXT:    sd s1, 24(sp)
+; RV64IM-NEXT:    sd s2, 16(sp)
+; RV64IM-NEXT:    sd s3, 8(sp)
+; RV64IM-NEXT:    sd s4, 0(sp)
+; RV64IM-NEXT:    .cfi_offset ra, -8
+; RV64IM-NEXT:    .cfi_offset s0, -16
+; RV64IM-NEXT:    .cfi_offset s1, -24
+; RV64IM-NEXT:    .cfi_offset s2, -32
+; RV64IM-NEXT:    .cfi_offset s3, -40
+; RV64IM-NEXT:    .cfi_offset s4, -48
+; RV64IM-NEXT:    mv a1, a0
+; RV64IM-NEXT:    mv s0, zero
+; RV64IM-NEXT:    addi a0, zero, 1
+; RV64IM-NEXT:    lui a2, 176602
+; RV64IM-NEXT:    addiw a2, a2, 1121
+; RV64IM-NEXT:    slli a2, a2, 15
+; RV64IM-NEXT:    addi a2, a2, 345
+; RV64IM-NEXT:    slli a2, a2, 13
+; RV64IM-NEXT:    addi s2, a2, -603
+; RV64IM-NEXT:    addi s3, zero, 95
+; RV64IM-NEXT:    lui a2, %hi(.L.str)
+; RV64IM-NEXT:    addi s4, a2, %lo(.L.str)
+; RV64IM-NEXT:    sext.w s1, a1
+; RV64IM-NEXT:  .LBB7_1: # %loop
+; RV64IM-NEXT:    # =>This Inner Loop Header: Depth=1
+; RV64IM-NEXT:    slli a0, a0, 32
+; RV64IM-NEXT:    srli a0, a0, 32
+; RV64IM-NEXT:    mul a0, a0, s2
+; RV64IM-NEXT:    mulhu a0, a0, s3
+; RV64IM-NEXT:    addw s0, a0, s0
+; RV64IM-NEXT:    mv a0, s4
+; RV64IM-NEXT:    mv a1, s0
+; RV64IM-NEXT:    call printf
+; RV64IM-NEXT:    sext.w a1, a0
+; RV64IM-NEXT:    bltu a1, s1, .LBB7_1
+; RV64IM-NEXT:  # %bb.2: # %afterloop
+; RV64IM-NEXT:    ld s4, 0(sp)
+; RV64IM-NEXT:    ld s3, 8(sp)
+; RV64IM-NEXT:    ld s2, 16(sp)
+; RV64IM-NEXT:    ld s1, 24(sp)
+; RV64IM-NEXT:    ld s0, 32(sp)
+; RV64IM-NEXT:    ld ra, 40(sp)
+; RV64IM-NEXT:    .cfi_restore ra
+; RV64IM-NEXT:    .cfi_restore s0
+; RV64IM-NEXT:    .cfi_restore s1
+; RV64IM-NEXT:    .cfi_restore s2
+; RV64IM-NEXT:    .cfi_restore s3
+; RV64IM-NEXT:    .cfi_restore s4
+; RV64IM-NEXT:    addi sp, sp, 48
+; RV64IM-NEXT:    .cfi_def_cfa_offset 0
+; RV64IM-NEXT:    ret
+entry:
+  %0 = add i32 0, 0
+  br label %loop
+loop:
+  %1 = phi i32 [ 1, %entry ], [ %5, %loop ]
+  %2 = phi i32 [%0, %entry], [%4, %loop]
+  %3 = urem i32 %1, 95
+  %4 = add i32 %3, %2
+  %5 = tail call i32 (i8*, ...) @printf(i8* nonnull dereferenceable(1) getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %4)
+  %6 = icmp ult i32 %5, %x
+  br i1 %6, label %loop, label %afterloop
+
+afterloop:
+  ret void
 }

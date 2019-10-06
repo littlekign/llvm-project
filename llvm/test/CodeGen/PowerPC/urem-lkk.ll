@@ -2,8 +2,8 @@
 ; RUN: llc -verify-machineinstrs -mtriple=powerpc-unknown-linux-gnu -mcpu=ppc64 < %s | FileCheck -check-prefixes=CHECK,CHECK64 %s
 ; RUN: llc -verify-machineinstrs -mtriple=powerpc-unknown-linux-gnu -mcpu=ppc < %s | FileCheck -check-prefixes=CHECK,CHECK32 %s
 
-define i32 @fold_urem_positive_odd(i32 %x) {
-; CHECK-LABEL: fold_urem_positive_odd:
+define i32 @lower_urem_positive_odd(i32 %x) {
+; CHECK-LABEL: lower_urem_positive_odd:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    lis 4, 22765
 ; CHECK-NEXT:    ori 4, 4, 8969
@@ -20,8 +20,8 @@ define i32 @fold_urem_positive_odd(i32 %x) {
 }
 
 
-define i32 @fold_urem_positive_even(i32 %x) {
-; CHECK-LABEL: fold_urem_positive_even:
+define i32 @lower_urem_positive_even(i32 %x) {
+; CHECK-LABEL: lower_urem_positive_even:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    lis 4, -2226
 ; CHECK-NEXT:    ori 4, 4, 16323
@@ -35,7 +35,7 @@ define i32 @fold_urem_positive_even(i32 %x) {
 }
 
 
-; Don't fold if we can combine urem with udiv.
+; Don't lower if we can combine urem with udiv.
 define i32 @combine_urem_udiv(i32 %x) {
 ; CHECK-LABEL: combine_urem_udiv:
 ; CHECK:       # %bb.0:
@@ -56,9 +56,9 @@ define i32 @combine_urem_udiv(i32 %x) {
   ret i32 %3
 }
 
-; Don't fold for divisors that are a power of two.
-define i32 @dont_fold_urem_power_of_two(i32 %x) {
-; CHECK-LABEL: dont_fold_urem_power_of_two:
+; Don't lower for divisors that are a power of two.
+define i32 @dont_lower_urem_power_of_two(i32 %x) {
+; CHECK-LABEL: dont_lower_urem_power_of_two:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    clrlwi 3, 3, 26
 ; CHECK-NEXT:    blr
@@ -66,9 +66,9 @@ define i32 @dont_fold_urem_power_of_two(i32 %x) {
   ret i32 %1
 }
 
-; Don't fold if the divisor is one.
-define i32 @dont_fold_urem_one(i32 %x) {
-; CHECK-LABEL: dont_fold_urem_one:
+; Don't lower if the divisor is one.
+define i32 @dont_lower_urem_one(i32 %x) {
+; CHECK-LABEL: dont_lower_urem_one:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    li 3, 0
 ; CHECK-NEXT:    blr
@@ -76,18 +76,18 @@ define i32 @dont_fold_urem_one(i32 %x) {
   ret i32 %1
 }
 
-; Don't fold if the divisor is 2^32.
-define i32 @dont_fold_urem_i32_umax(i32 %x) {
-; CHECK-LABEL: dont_fold_urem_i32_umax:
+; Don't lower if the divisor is 2^32.
+define i32 @dont_lower_urem_i32_umax(i32 %x) {
+; CHECK-LABEL: dont_lower_urem_i32_umax:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    blr
   %1 = urem i32 %x, 4294967296
   ret i32 %1
 }
 
-; Don't fold i64 urem
-define i64 @dont_fold_urem_i64(i64 %x) {
-; CHECK-LABEL: dont_fold_urem_i64:
+; Don't lower i64 urem
+define i64 @dont_lower_urem_i64(i64 %x) {
+; CHECK-LABEL: dont_lower_urem_i64:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    mflr 0
 ; CHECK-NEXT:    stw 0, 4(1)
@@ -103,4 +103,25 @@ define i64 @dont_fold_urem_i64(i64 %x) {
 ; CHECK-NEXT:    blr
   %1 = urem i64 %x, 98
   ret i64 %1
+}
+
+@.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+
+declare dso_local i32 @printf(i8* nocapture readonly, ...) local_unnamed_addr #1
+
+define void @urem_loop(i32 %x) {
+entry:
+  %0 = add i32 0, 0
+  br label %loop
+loop:
+  %1 = phi i32 [ 1, %entry ], [ %5, %loop ]
+  %2 = phi i32 [%0, %entry], [%4, %loop]
+  %3 = urem i32 %1, 95
+  %4 = add i32 %3, %2 
+  %5 = tail call i32 (i8*, ...) @printf(i8* nonnull dereferenceable(1) getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %4)
+  %6 = icmp ult i32 %5, %x
+  br i1 %6, label %loop, label %afterloop
+
+afterloop:
+  ret void
 }

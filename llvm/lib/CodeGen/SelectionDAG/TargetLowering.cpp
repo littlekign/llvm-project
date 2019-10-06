@@ -4971,6 +4971,116 @@ turnVectorIntoSplatVector(MutableArrayRef<SDValue> Values,
   std::replace_if(Values.begin(), Values.end(), Predicate, Replacement);
 }
 
+/// Given an ISD::UREM where the divisor is constant,
+/// return a DAG expression that will generate the same result
+/// using only multiplications, additions and shifts.
+/// Ref: D. Lemire, O. Kaser, and N. Kurz, "Faster Remainder by Direct
+/// Computation" (LKK)
+SDValue TargetLowering::BuildUREM(SDNode *Node, SelectionDAG &DAG,
+                                  bool IsAfterLegalization,
+                                  SmallVectorImpl<SDNode *> &Created) const {
+  SDLoc DL(Node);
+  EVT VT = Node->getValueType(0);
+  EVT FVT;
+  if (VT.isVector()) {
+    EVT SVT =
+        EVT::getIntegerVT(*DAG.getContext(), VT.getScalarSizeInBits() * 2);
+    FVT = EVT::getVectorVT(*DAG.getContext(), SVT, VT.getVectorElementCount());
+  } else {
+    FVT = EVT::getIntegerVT(*DAG.getContext(), VT.getScalarSizeInBits() * 2);
+  }
+
+  unsigned F = FVT.getScalarSizeInBits();
+
+  // when optimising for minimum size, we don't want to expand div
+  if (DAG.getMachineFunction().getFunction().hasMinSize())
+    return SDValue();
+
+  // Check to see if we can do this.
+  if (IsAfterLegalization && !isTypeLegal(FVT))
+    return SDValue();
+
+  // If MUL is unavailable, we cannot proceed in any case.
+  if (!isOperationLegalOrCustom(ISD::MUL, FVT))
+    return SDValue();
+
+  SmallVector<SDValue, 8> MagicFactors;
+  bool AllDivisorsArePowerOfTwo = true;
+  bool AllDivisorsAreOnes = true;
+
+  auto BuildUREMPattern = [&](ConstantSDNode *DivisorConstant) {
+    // calculate magic number: c = ceil(2^N / d) + 1
+    const APInt &D = DivisorConstant->getAPIntValue();
+    APInt C = APInt::getMaxValue(F).udiv(D.zext(F)) + APInt(F, 1);
+    SDValue AproximateReciprocal = DAG.getConstant(C, DL, FVT.getScalarType());
+
+    MagicFactors.push_back(AproximateReciprocal);
+
+    assert(!D.isNullValue() && "Divisor cannot be zero");
+
+    AllDivisorsArePowerOfTwo &= D.isPowerOf2();
+    AllDivisorsAreOnes &= D.isOneValue();
+
+    if (!D.isStrictlyPositive()) {
+      // Divisor must be in the range of [1,2^N)
+      return false;
+    }
+
+    return true;
+  };
+
+  // numerator
+  SDValue Numerator = Node->getOperand(0);
+  SDValue ExtendedNumerator = DAG.getZExtOrTrunc(Numerator, DL, FVT);
+
+  // divisor constant
+  SDValue Divisor = Node->getOperand(1);
+  SDValue ExtendedDivisor = DAG.getZExtOrTrunc(Divisor, DL, FVT);
+
+  if (!ISD::matchUnaryPredicate(Divisor, BuildUREMPattern))
+    return SDValue();
+
+  // If this is a urem by a one, avoid the fold since it can be constant-folded.
+  if (AllDivisorsAreOnes)
+    return SDValue();
+
+  // If this is a urem by a powers-of-two, avoid the fold since it can be
+  // best implemented as a bit test.
+  if (AllDivisorsArePowerOfTwo)
+    return SDValue();
+
+  SDValue MagicFactor = VT.isVector()
+                            ? DAG.getBuildVector(FVT, DL, MagicFactors)
+                            : MagicFactors[0];
+
+  // lowbits = c * n
+  SDValue Lowbits =
+      DAG.getNode(ISD::MUL, DL, FVT, MagicFactor, ExtendedNumerator);
+
+  // result = lowbits * d >> F
+  SDValue Result;
+  if (IsAfterLegalization ? isOperationLegal(ISD::MULHU, FVT)
+                          : isOperationLegalOrCustom(ISD::MULHU, FVT))
+    Result = DAG.getNode(ISD::MULHU, DL, FVT, Lowbits, ExtendedDivisor);
+  else if (IsAfterLegalization
+               ? isOperationLegal(ISD::UMUL_LOHI, FVT)
+               : isOperationLegalOrCustom(ISD::UMUL_LOHI, FVT)) {
+    SDValue LoHi = DAG.getNode(ISD::UMUL_LOHI, DL, DAG.getVTList(FVT, FVT),
+                               Lowbits, ExtendedDivisor);
+    Result = SDValue(LoHi.getNode(), 1);
+  } else {
+    return SDValue(); // No mulhu or equivalent
+  }
+
+  Created.push_back(MagicFactor.getNode());
+  Created.push_back(ExtendedNumerator.getNode());
+  Created.push_back(Lowbits.getNode());
+  Created.push_back(ExtendedDivisor.getNode());
+  Created.push_back(Result.getNode());
+
+  return DAG.getZExtOrTrunc(Result, DL, VT);
+}
+
 /// Given an ISD::UREM used only by an ISD::SETEQ or ISD::SETNE
 /// where the divisor is constant and the comparison target is zero,
 /// return a DAG expression that will generate the same comparison result
