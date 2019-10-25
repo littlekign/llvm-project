@@ -156,8 +156,8 @@ class XCOFFObjectWriter : public MCObjectWriter {
   // CsectGroups. These store the csects which make up different parts of
   // the sections. Should have one for each set of csects that get mapped into
   // the same section and get handled in a 'similar' way.
-  CsectGroup ProgramCodeCsects{CsectGroup::LabelDefSupported};
-  CsectGroup BSSCsects{CsectGroup::LabelDefUnsupported};
+  CsectGroup ProgramCodeCsects{CsectGroup::LabelDefSupported, {}};
+  CsectGroup BSSCsects{CsectGroup::LabelDefUnsupported, {}};
 
   // The Predefined sections.
   Section Text;
@@ -165,7 +165,7 @@ class XCOFFObjectWriter : public MCObjectWriter {
 
   // All the XCOFF sections, in the order they will appear in the section header
   // table.
-  std::array<Section *const, 2> Sections = {&Text, &BSS};
+  std::array<Section *const, 2> Sections{{&Text, &BSS}};
 
   CsectGroup &getCsectGroup(const MCSectionXCOFF *MCSec);
 
