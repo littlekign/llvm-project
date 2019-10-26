@@ -693,18 +693,18 @@ static Error BundleFiles() {
 
   // Write header.
   if (Error Err = FH->WriteHeader(OutputFile, InputBuffers))
-    return std::move(Err);
+    return Err;
 
   // Write all bundles along with the start/end markers. If an error was found
   // writing the end of the bundle component, abort the bundle writing.
   auto Input = InputBuffers.begin();
   for (auto &Triple : TargetNames) {
     if (Error Err = FH->WriteBundleStart(OutputFile, Triple))
-      return std::move(Err);
+      return Err;
     if (Error Err = FH->WriteBundle(OutputFile, **Input))
-      return std::move(Err);
+      return Err;
     if (Error Err = FH->WriteBundleEnd(OutputFile, Triple))
-      return std::move(Err);
+      return Err;
     ++Input;
   }
   return Error::success();
@@ -731,7 +731,7 @@ static Error UnbundleFiles() {
 
   // Read the header of the bundled file.
   if (Error Err = FH->ReadHeader(Input))
-    return std::move(Err);
+    return Err;
 
   // Create a work list that consist of the map triple/output file.
   StringMap<StringRef> Worklist;
@@ -768,9 +768,9 @@ static Error UnbundleFiles() {
     if (EC)
       return createFileError(Output->second, EC);
     if (Error Err = FH->ReadBundle(OutputFile, Input))
-      return std::move(Err);
+      return Err;
     if (Error Err = FH->ReadBundleEnd(Input))
-      return std::move(Err);
+      return Err;
     Worklist.erase(Output);
 
     // Record if we found the host bundle.
