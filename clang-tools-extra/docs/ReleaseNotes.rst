@@ -130,6 +130,12 @@ Improvements to clang-tidy
 - The 'objc-avoid-spinlock' check was renamed to :doc:`darwin-avoid-spinlock
   <clang-tidy/checks/darwin-avoid-spinlock>`
 
+- New :doc:`readability-redundant-access-specifiers
+  <clang-tidy/checks/readability-redundant-access-specifiers>` check.
+
+  Finds classes, structs, and unions that contain redundant member
+  access specifiers.
+
 Improvements to include-fixer
 -----------------------------
 
