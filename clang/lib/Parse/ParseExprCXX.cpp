@@ -1352,6 +1352,13 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     // Parse attribute-specifier[opt].
     MaybeParseCXX11Attributes(Attr, &DeclEndLoc);
 
+    // Parse OpenCL addr space attribute.
+    if (Tok.isOneOf(tok::kw___private, tok::kw___global, tok::kw___local,
+                    tok::kw___constant, tok::kw___generic)) {
+      ParseOpenCLQualifiers(DS.getAttributes());
+      ConsumeToken();
+    }
+
     SourceLocation FunLocalRangeEnd = DeclEndLoc;
 
     // Parse trailing-return-type[opt].
@@ -1363,10 +1370,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
       if (Range.getEnd().isValid())
         DeclEndLoc = Range.getEnd();
     }
-
-    PrototypeScope.Exit();
-
-    WarnIfHasCUDATargetAttr();
 
     SourceLocation NoLoc;
     D.AddTypeInfo(DeclaratorChunk::getFunction(
@@ -1380,21 +1383,38 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                       NoexceptExpr.isUsable() ? NoexceptExpr.get() : nullptr,
                       /*ExceptionSpecTokens*/ nullptr,
                       /*DeclsInPrototype=*/None, LParenLoc, FunLocalRangeEnd, D,
-                      TrailingReturnType),
+                      TrailingReturnType, &DS),
                   std::move(Attr), DeclEndLoc);
+
+    // Parse requires-clause[opt].
+    if (Tok.is(tok::kw_requires))
+      ParseTrailingRequiresClause(D);
+
+    PrototypeScope.Exit();
+
+    WarnIfHasCUDATargetAttr();
   } else if (Tok.isOneOf(tok::kw_mutable, tok::arrow, tok::kw___attribute,
-                         tok::kw_constexpr, tok::kw_consteval) ||
+                         tok::kw_constexpr, tok::kw_consteval,
+                         tok::kw___private, tok::kw___global, tok::kw___local,
+                         tok::kw___constant, tok::kw___generic,
+                         tok::kw_requires) ||
              (Tok.is(tok::l_square) && NextToken().is(tok::l_square))) {
     // It's common to forget that one needs '()' before 'mutable', an attribute
-    // specifier, or the result type. Deal with this.
+    // specifier, the result type, or the requires clause. Deal with this.
     unsigned TokKind = 0;
     switch (Tok.getKind()) {
     case tok::kw_mutable: TokKind = 0; break;
     case tok::arrow: TokKind = 1; break;
     case tok::kw___attribute:
+    case tok::kw___private:
+    case tok::kw___global:
+    case tok::kw___local:
+    case tok::kw___constant:
+    case tok::kw___generic:
     case tok::l_square: TokKind = 2; break;
     case tok::kw_constexpr: TokKind = 3; break;
     case tok::kw_consteval: TokKind = 4; break;
+    case tok::kw_requires: TokKind = 5; break;
     default: llvm_unreachable("Unknown token kind");
     }
 
@@ -1426,8 +1446,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
         DeclEndLoc = Range.getEnd();
     }
 
-    WarnIfHasCUDATargetAttr();
-
     SourceLocation NoLoc;
     D.AddTypeInfo(DeclaratorChunk::getFunction(
                       /*HasProto=*/true,
@@ -1448,6 +1466,12 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                       /*DeclsInPrototype=*/None, DeclLoc, DeclEndLoc, D,
                       TrailingReturnType),
                   std::move(Attr), DeclEndLoc);
+
+    // Parse the requires-clause, if present.
+    if (Tok.is(tok::kw_requires))
+      ParseTrailingRequiresClause(D);
+
+    WarnIfHasCUDATargetAttr();
   }
 
   // FIXME: Rename BlockScope -> ClosureScope if we decide to continue using
@@ -1848,9 +1872,11 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
     CommaLocsTy CommaLocs;
 
     auto RunSignatureHelp = [&]() {
-      QualType PreferredType = Actions.ProduceConstructorSignatureHelp(
-          getCurScope(), TypeRep.get()->getCanonicalTypeInternal(),
-          DS.getEndLoc(), Exprs, T.getOpenLocation());
+      QualType PreferredType;
+      if (TypeRep)
+        PreferredType = Actions.ProduceConstructorSignatureHelp(
+            getCurScope(), TypeRep.get()->getCanonicalTypeInternal(),
+            DS.getEndLoc(), Exprs, T.getOpenLocation());
       CalledSignatureHelp = true;
       return PreferredType;
     };
@@ -2001,7 +2027,7 @@ Sema::ConditionResult Parser::ParseCXXCondition(StmtResult *InitStmt,
   // simple-asm-expr[opt]
   if (Tok.is(tok::kw_asm)) {
     SourceLocation Loc;
-    ExprResult AsmLabel(ParseSimpleAsm(&Loc));
+    ExprResult AsmLabel(ParseSimpleAsm(/*ForAsmLabel*/ true, &Loc));
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi, StopAtSemi);
       return Sema::ConditionError();
@@ -3024,6 +3050,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       auto RunSignatureHelp = [&]() {
         ParsedType TypeRep =
             Actions.ActOnTypeName(getCurScope(), DeclaratorInfo).get();
+        assert(TypeRep && "invalid types should be handled before");
         QualType PreferredType = Actions.ProduceConstructorSignatureHelp(
             getCurScope(), TypeRep.get()->getCanonicalTypeInternal(),
             DeclaratorInfo.getEndLoc(), ConstructorArgs, ConstructorLParen);
@@ -3221,7 +3248,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
       return ExprError();
   }
 
-  ExprResult Operand(ParseCastExpression(false));
+  ExprResult Operand(ParseCastExpression(AnyCastExpr));
   if (Operand.isInvalid())
     return Operand;
 
@@ -3452,7 +3479,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
       // If it is not a cast-expression, NotCastExpr will be true and no token
       // will be consumed.
       ColonProt.restore();
-      Result = ParseCastExpression(false/*isUnaryExpression*/,
+      Result = ParseCastExpression(AnyCastExpr,
                                    false/*isAddressofOperand*/,
                                    NotCastExpr,
                                    // type-id has priority.

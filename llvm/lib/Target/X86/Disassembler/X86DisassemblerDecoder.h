@@ -19,6 +19,9 @@
 #include "llvm/Support/X86DisassemblerDecoderCommon.h"
 
 namespace llvm {
+
+class MCInstrInfo;
+
 namespace X86Disassembler {
 
 // Accessor functions for various fields of an Intel instruction
@@ -446,12 +449,12 @@ enum SIBBase {
 };
 
 /// Possible displacement types for effective-address computations.
-typedef enum {
+enum EADisplacement {
   EA_DISP_NONE,
   EA_DISP_8,
   EA_DISP_16,
   EA_DISP_32
-} EADisplacement;
+};
 
 /// All possible values of the reg field in the ModR/M byte.
 enum Reg {
@@ -529,17 +532,10 @@ struct InstructionSpecifier {
 
 /// The x86 internal instruction, which is produced by the decoder.
 struct InternalInstruction {
-  // Reader interface (C)
-  byteReader_t reader;
   // Opaque value passed to the reader
-  const void* readerArg;
+  llvm::ArrayRef<uint8_t> bytes;
   // The address of the next byte to read via the reader
   uint64_t readerCursor;
-
-  // Logger interface (C)
-  dlog_t dlog;
-  // Opaque value passed to the logger
-  void* dlogArg;
 
   // General instruction information
 
@@ -659,27 +655,8 @@ struct InternalInstruction {
 
 /// Decode one instruction and store the decoding results in
 /// a buffer provided by the consumer.
-/// \param insn      The buffer to store the instruction in.  Allocated by the
-///                  consumer.
-/// \param reader    The byteReader_t for the bytes to be read.
-/// \param readerArg An argument to pass to the reader for storing context
-///                  specific to the consumer.  May be NULL.
-/// \param logger    The dlog_t to be used in printing status messages from the
-///                  disassembler.  May be NULL.
-/// \param loggerArg An argument to pass to the logger for storing context
-///                  specific to the logger.  May be NULL.
-/// \param startLoc  The address (in the reader's address space) of the first
-///                  byte in the instruction.
-/// \param mode      The mode (16-bit, 32-bit, 64-bit) to decode in.
 /// \return          Nonzero if there was an error during decode, 0 otherwise.
-int decodeInstruction(InternalInstruction *insn,
-                      byteReader_t reader,
-                      const void *readerArg,
-                      dlog_t logger,
-                      void *loggerArg,
-                      const void *miiArg,
-                      uint64_t startLoc,
-                      DisassemblerMode mode);
+int decodeInstruction(InternalInstruction *insn, const MCInstrInfo *mii);
 
 /// Print a message to debugs()
 /// \param file The name of the file printing the debug message.

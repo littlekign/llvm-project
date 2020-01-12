@@ -140,7 +140,6 @@ public:
 public:
   DecodeStatus getInstruction(MCInst &instr, uint64_t &size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
-                              raw_ostream &vStream,
                               raw_ostream &cStream) const override;
 
 private:
@@ -169,85 +168,44 @@ X86GenericDisassembler::X86GenericDisassembler(
   llvm_unreachable("Invalid CPU mode");
 }
 
-namespace {
-struct Region {
-  ArrayRef<uint8_t> Bytes;
-  uint64_t Base;
-  Region(ArrayRef<uint8_t> Bytes, uint64_t Base) : Bytes(Bytes), Base(Base) {}
-};
-} // end anonymous namespace
-
-/// A callback function that wraps the readByte method from Region.
-///
-/// @param Arg      - The generic callback parameter.  In this case, this should
-///                   be a pointer to a Region.
-/// @param Byte     - A pointer to the byte to be read.
-/// @param Address  - The address to be read.
-static int regionReader(const void *Arg, uint8_t *Byte, uint64_t Address) {
-  auto *R = static_cast<const Region *>(Arg);
-  ArrayRef<uint8_t> Bytes = R->Bytes;
-  unsigned Index = Address - R->Base;
-  if (Bytes.size() <= Index)
-    return -1;
-  *Byte = Bytes[Index];
-  return 0;
-}
-
-/// logger - a callback function that wraps the operator<< method from
-///   raw_ostream.
-///
-/// @param arg      - The generic callback parameter.  This should be a pointe
-///                   to a raw_ostream.
-/// @param log      - A string to be logged.  logger() adds a newline.
-static void logger(void* arg, const char* log) {
-  if (!arg)
-    return;
-
-  raw_ostream &vStream = *(static_cast<raw_ostream*>(arg));
-  vStream << log << "\n";
-}
-
 //
 // Public interface for the disassembler
 //
 
 MCDisassembler::DecodeStatus X86GenericDisassembler::getInstruction(
     MCInst &Instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address,
-    raw_ostream &VStream, raw_ostream &CStream) const {
+    raw_ostream &CStream) const {
   CommentStream = &CStream;
 
-  InternalInstruction InternalInstr;
+  InternalInstruction Insn;
+  memset(&Insn, 0, sizeof(InternalInstruction));
+  Insn.bytes = Bytes;
+  Insn.startLocation = Address;
+  Insn.readerCursor = Address;
+  Insn.mode = fMode;
 
-  dlog_t LoggerFn = logger;
-  if (&VStream == &nulls())
-    LoggerFn = nullptr; // Disable logging completely if it's going to nulls().
-
-  Region R(Bytes, Address);
-
-  int Ret = decodeInstruction(&InternalInstr, regionReader, (const void *)&R,
-                              LoggerFn, (void *)&VStream,
-                              (const void *)MII.get(), Address, fMode);
+  int Ret = decodeInstruction(&Insn, MII.get());
 
   if (Ret) {
-    Size = InternalInstr.readerCursor - Address;
+    Size = Insn.readerCursor - Address;
     return Fail;
   } else {
-    Size = InternalInstr.length;
-    bool Ret = translateInstruction(Instr, InternalInstr, this);
+    Size = Insn.length;
+    bool Ret = translateInstruction(Instr, Insn, this);
     if (!Ret) {
       unsigned Flags = X86::IP_NO_PREFIX;
-      if (InternalInstr.hasAdSize)
+      if (Insn.hasAdSize)
         Flags |= X86::IP_HAS_AD_SIZE;
-      if (!InternalInstr.mandatoryPrefix) {
-        if (InternalInstr.hasOpSize)
+      if (!Insn.mandatoryPrefix) {
+        if (Insn.hasOpSize)
           Flags |= X86::IP_HAS_OP_SIZE;
-        if (InternalInstr.repeatPrefix == 0xf2)
+        if (Insn.repeatPrefix == 0xf2)
           Flags |= X86::IP_HAS_REPEAT_NE;
-        else if (InternalInstr.repeatPrefix == 0xf3 &&
+        else if (Insn.repeatPrefix == 0xf3 &&
                  // It should not be 'pause' f3 90
-                 InternalInstr.opcode != 0x90)
+                 Insn.opcode != 0x90)
           Flags |= X86::IP_HAS_REPEAT;
-        if (InternalInstr.hasLockPrefix)
+        if (Insn.hasLockPrefix)
           Flags |= X86::IP_HAS_LOCK;
       }
       Instr.setFlags(Flags);
