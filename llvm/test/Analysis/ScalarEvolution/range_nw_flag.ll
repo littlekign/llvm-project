@@ -1,8 +1,9 @@
-; RUN: opt < %s -S -analyze -scalar-evolution | FileCheck %s
+; RUN: opt < %s -S -analyze -enable-new-pm=0 -scalar-evolution | FileCheck %s
+; RUN: opt < %s -S -disable-output "-passes=print<scalar-evolution>" 2>&1 | FileCheck %s
 
 ; copied from flags-from-poison.ll
 ; CHECK-LABEL: @test-add-nuw
-; CHECK: -->  {(1 + %offset)<nuw>,+,1}<nuw><%loop> U: full-set S: full-set
+; CHECK: -->  {(1 + %offset)<nuw>,+,1}<nuw><%loop> U: [1,0) S: [1,0)
 define void @test-add-nuw(float* %input, i32 %offset, i32 %numIterations) {
 entry:
   br label %loop
@@ -20,7 +21,7 @@ exit:
 }
 
 ; CHECK-LABEL: @test-addrec-nuw
-; CHECK: -->  {(1 + (10 smax %offset))<nuw>,+,1}<nuw><%loop> U: full-set S: full-set 
+; CHECK: -->  {(1 + (10 smax %offset))<nuw>,+,1}<nuw><%loop> U: [11,0) S: [11,0)
 define void @test-addrec-nuw(float* %input, i32 %offset, i32 %numIterations) {
 entry:
   %cmp = icmp sgt i32 %offset, 10
@@ -40,7 +41,7 @@ exit:
 }
 
 ; CHECK-LABEL: @test-addrec-nsw-start-neg-strip-neg
-; CHECK: -->  {(-1 + (-10 smin %offset))<nsw>,+,-1}<nsw><%loop> U: [-2147483648,1) S: [-2147483648,1)
+; CHECK: -->  {(-1 + (-10 smin %offset))<nsw>,+,-1}<nsw><%loop> U: [-2147483648,-10) S: [-2147483648,-10)
 define void @test-addrec-nsw-start-neg-strip-neg(float* %input, i32 %offset, i32 %numIterations) {
 entry:
   %cmp = icmp slt i32 %offset, -10
@@ -60,7 +61,7 @@ exit:
 }
 
 ; CHECK-LABEL: @test-addrec-nsw-start-pos-strip-neg
-; CHECK: -->  {(-1 + (10 smin %offset))<nsw>,+,-1}<nsw><%loop> U: full-set S: full-set
+; CHECK: -->  {(-1 + (10 smin %offset))<nsw>,+,-1}<nsw><%loop> U: [-2147483648,10) S: [-2147483648,10)
 define void @test-addrec-nsw-start-pos-strip-neg(float* %input, i32 %offset, i32 %numIterations) {
 entry:
   %cmp = icmp slt i32 %offset, 10
@@ -80,7 +81,7 @@ exit:
 }
 
 ; CHECK-LABEL: @test-addrec-nsw-start-pos-strip-pos
-; CHECK: -->  {(1 + (10 smax %offset))<nuw><nsw>,+,1}<nuw><nsw><%loop> U: [0,-2147483648) S: [0,-2147483648)
+; CHECK: -->  {(1 + (10 smax %offset))<nuw><nsw>,+,1}<nuw><nsw><%loop> U: [11,-2147483648) S: [11,-2147483648)
 define void @test-addrec-nsw-start-pos-strip-pos(float* %input, i32 %offset, i32 %numIterations) {
 entry:
   %cmp = icmp sgt i32 %offset, 10
@@ -100,7 +101,7 @@ exit:
 }
 
 ; CHECK-LABEL: @test-addrec-nsw-start-neg-strip-pos
-; CHECK: -->  {(1 + (-10 smax %offset))<nsw>,+,1}<nsw><%loop> U: full-set S: full-set
+; CHECK: -->  {(1 + (-10 smax %offset))<nsw>,+,1}<nsw><%loop> U: [-9,-2147483648) S: [-9,-2147483648)
 define void @test-addrec-nsw-start-neg-strip-pos(float* %input, i32 %offset, i32 %numIterations) {
 entry:
   %cmp = icmp sgt i32 %offset, -10

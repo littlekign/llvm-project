@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_CommandObjectRegexCommand_h_
-#define liblldb_CommandObjectRegexCommand_h_
+#ifndef LLDB_INTERPRETER_COMMANDOBJECTREGEXCOMMAND_H
+#define LLDB_INTERPRETER_COMMANDOBJECTREGEXCOMMAND_H
 
 #include <list>
 
@@ -30,7 +30,7 @@ public:
 
   bool IsRemovable() const override { return m_is_removable; }
 
-  bool AddRegexCommand(const char *re_cstr, const char *command_cstr);
+  bool AddRegexCommand(llvm::StringRef re_cstr, llvm::StringRef command_cstr);
 
   bool HasRegexEntries() const { return !m_entries.empty(); }
 
@@ -51,9 +51,11 @@ protected:
   bool m_is_removable;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(CommandObjectRegexCommand);
+  CommandObjectRegexCommand(const CommandObjectRegexCommand &) = delete;
+  const CommandObjectRegexCommand &
+  operator=(const CommandObjectRegexCommand &) = delete;
 };
 
 } // namespace lldb_private
 
-#endif // liblldb_CommandObjectRegexCommand_h_
+#endif // LLDB_INTERPRETER_COMMANDOBJECTREGEXCOMMAND_H

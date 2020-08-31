@@ -15,5 +15,6 @@ executable("clang-tidy") {
   ]
   sources = [
     "ClangTidyMain.cpp",
+    "ClangTidyToolMain.cpp",
   ]
 }

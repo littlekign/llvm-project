@@ -21,7 +21,5 @@ static_library("AsmParser") {
     "//llvm/lib/Target/RISCV/Utils",
   ]
   include_dirs = [ ".." ]
-  sources = [
-    "RISCVAsmParser.cpp",
-  ]
+  sources = [ "RISCVAsmParser.cpp" ]
 }

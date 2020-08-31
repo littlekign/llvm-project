@@ -14,6 +14,7 @@
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "PPC.h"
 #include "PPCMachineScheduler.h"
+#include "PPCMacroFusion.h"
 #include "PPCSubtarget.h"
 #include "PPCTargetObjectFile.h"
 #include "PPCTargetTransformInfo.h"
@@ -63,10 +64,6 @@ opt<bool> DisableVSXSwapRemoval("disable-ppc-vsx-swap-removal", cl::Hidden,
                                 cl::desc("Disable VSX Swap Removal for PPC"));
 
 static cl::
-opt<bool> DisableQPXLoadSplat("disable-ppc-qpx-load-splat", cl::Hidden,
-                              cl::desc("Disable QPX load splat simplification"));
-
-static cl::
 opt<bool> DisableMIPeephole("disable-ppc-peephole", cl::Hidden,
                             cl::desc("Disable machine peepholes for PPC"));
 
@@ -94,7 +91,7 @@ static cl::opt<bool>
   ReduceCRLogical("ppc-reduce-cr-logicals",
                   cl::desc("Expand eligible cr-logical binary ops to branches"),
                   cl::init(true), cl::Hidden);
-extern "C" void LLVMInitializePowerPCTarget() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPCTargetMachine> A(getThePPC32Target());
   RegisterTargetMachine<PPCTargetMachine> B(getThePPC64Target());
@@ -113,7 +110,6 @@ extern "C" void LLVMInitializePowerPCTarget() {
   initializePPCReduceCRLogicalsPass(PR);
   initializePPCBSelPass(PR);
   initializePPCBranchCoalescingPass(PR);
-  initializePPCQPXLoadSplatPass(PR);
   initializePPCBoolRetToIntPass(PR);
   initializePPCExpandISELPass(PR);
   initializePPCPreEmitPeepholePass(PR);
@@ -158,7 +154,7 @@ static std::string getDataLayoutString(const Triple &T) {
 
 static std::string computeFSAdditions(StringRef FS, CodeGenOpt::Level OL,
                                       const Triple &TT) {
-  std::string FullFS = FS;
+  std::string FullFS = std::string(FS);
 
   // Make sure 64-bit features are available when CPUname is generic
   if (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le) {
@@ -223,6 +219,9 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
                                            Optional<Reloc::Model> RM) {
+  assert((!TT.isOSAIX() || !RM.hasValue() || *RM == Reloc::PIC_) &&
+         "Invalid relocation model for AIX.");
+
   if (RM.hasValue())
     return *RM;
 
@@ -230,8 +229,8 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
   if (TT.isOSDarwin())
     return Reloc::DynamicNoPIC;
 
-  // Big Endian PPC is PIC by default.
-  if (TT.getArch() == Triple::ppc64)
+  // Big Endian PPC and AIX default to PIC.
+  if (TT.getArch() == Triple::ppc64 || TT.isOSAIX())
     return Reloc::PIC_;
 
   // Rest are static by default.
@@ -272,6 +271,9 @@ static ScheduleDAGInstrs *createPPCMachineScheduler(MachineSchedContext *C) {
                           std::make_unique<GenericScheduler>(C));
   // add DAG Mutations here.
   DAG->addMutation(createCopyConstrainDAGMutation(DAG->TII, DAG->TRI));
+  if (ST.hasFusion())
+    DAG->addMutation(createPowerPCMacroFusionDAGMutation());
+
   return DAG;
 }
 
@@ -283,6 +285,8 @@ static ScheduleDAGInstrs *createPPCPostMachineScheduler(
                       std::make_unique<PPCPostRASchedStrategy>(C) :
                       std::make_unique<PostGenericScheduler>(C), true);
   // add DAG Mutations here.
+  if (ST.hasFusion())
+    DAG->addMutation(createPowerPCMacroFusionDAGMutation());
   return DAG;
 }
 
@@ -312,12 +316,10 @@ PPCTargetMachine::getSubtargetImpl(const Function &F) const {
   Attribute CPUAttr = F.getFnAttribute("target-cpu");
   Attribute FSAttr = F.getFnAttribute("target-features");
 
-  std::string CPU = !CPUAttr.hasAttribute(Attribute::None)
-                        ? CPUAttr.getValueAsString().str()
-                        : TargetCPU;
-  std::string FS = !FSAttr.hasAttribute(Attribute::None)
-                       ? FSAttr.getValueAsString().str()
-                       : TargetFS;
+  std::string CPU =
+      CPUAttr.isValid() ? CPUAttr.getValueAsString().str() : TargetCPU;
+  std::string FS =
+      FSAttr.isValid() ? FSAttr.getValueAsString().str() : TargetFS;
 
   // FIXME: This is related to the code below to reset the target options,
   // we need to know whether or not the soft float flag is set on the
@@ -402,14 +404,9 @@ void PPCPassConfig::addIRPasses() {
 
   // Lower generic MASSV routines to PowerPC subtarget-specific entries.
   addPass(createPPCLowerMASSVEntriesPass());
-  
-  // For the BG/Q (or if explicitly requested), add explicit data prefetch
-  // intrinsics.
-  bool UsePrefetching = TM->getTargetTriple().getVendor() == Triple::BGQ &&
-                        getOptLevel() != CodeGenOpt::None;
+
+  // If explicitly requested, add explicit data prefetch intrinsics.
   if (EnablePrefetch.getNumOccurrences() > 0)
-    UsePrefetching = EnablePrefetch;
-  if (UsePrefetching)
     addPass(createLoopDataPrefetchPass());
 
   if (TM->getOptLevel() >= CodeGenOpt::Default && EnableGEPOpt) {
@@ -495,7 +492,7 @@ void PPCPassConfig::addPreRegAlloc() {
     // PPCTLSDynamicCallPass uses LiveIntervals which previously dependent on
     // LiveVariables. This (unnecessary) dependency has been removed now,
     // however a stage-2 clang build fails without LiveVariables computed here.
-    addPass(&LiveVariablesID, false);
+    addPass(&LiveVariablesID);
     addPass(createPPCTLSDynamicCallPass());
   }
   if (EnableExtraTOCRegDeps)
@@ -506,15 +503,8 @@ void PPCPassConfig::addPreRegAlloc() {
 }
 
 void PPCPassConfig::addPreSched2() {
-  if (getOptLevel() != CodeGenOpt::None) {
+  if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
-
-    // This optimization must happen after anything that might do store-to-load
-    // forwarding. Here we're after RA (and, thus, when spills are inserted)
-    // but before post-RA scheduling.
-    if (!DisableQPXLoadSplat)
-      addPass(createPPCQPXLoadSplatPass());
-  }
 }
 
 void PPCPassConfig::addPreEmitPass() {
@@ -522,9 +512,9 @@ void PPCPassConfig::addPreEmitPass() {
   addPass(createPPCExpandISELPass());
 
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createPPCEarlyReturnPass(), false);
+    addPass(createPPCEarlyReturnPass());
   // Must run branch selection immediately preceding the asm printer.
-  addPass(createPPCBranchSelectionPass(), false);
+  addPass(createPPCBranchSelectionPass());
 }
 
 TargetTransformInfo

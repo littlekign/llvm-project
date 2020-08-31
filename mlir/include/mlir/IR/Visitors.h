@@ -1,6 +1,6 @@
 //===- Visitors.h - Utilities for visiting operations -----------*- C++ -*-===//
 //
-// Part of the MLIR Project, under the Apache License v2.0 with LLVM Exceptions.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
@@ -43,7 +43,7 @@ public:
   static WalkResult interrupt() { return {Interrupt}; }
   static WalkResult advance() { return {Advance}; }
 
-  /// Returns if the walk was interrupted.
+  /// Returns true if the walk was interrupted.
   bool wasInterrupted() const { return result == Interrupt; }
 };
 
@@ -76,7 +76,7 @@ WalkResult walkOperations(Operation *op,
 // upon the type of the callback function.
 
 /// Walk all of the operations nested under and including the given operation.
-/// This method is selected for callbacks that operation on Operation*.
+/// This method is selected for callbacks that operate on Operation*.
 ///
 /// Example:
 ///   op->walk([](Operation *op) { ... });

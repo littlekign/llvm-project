@@ -1,6 +1,6 @@
 //===- DialectImplementation.h ----------------------------------*- C++ -*-===//
 //
-// Part of the MLIR Project, under the Apache License v2.0 with LLVM Exceptions.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
@@ -200,6 +200,12 @@ public:
   /// Parse a `=` token.
   virtual ParseResult parseEqual() = 0;
 
+  /// Parse a `=` token if present.
+  virtual ParseResult parseOptionalEqual() = 0;
+
+  /// Parse a quoted string token if present.
+  virtual ParseResult parseOptionalString(StringRef *string) = 0;
+
   /// Parse a given keyword.
   ParseResult parseKeyword(StringRef keyword, const Twine &msg = "") {
     auto loc = getCurrentLocation();
@@ -291,6 +297,12 @@ public:
     return success();
   }
 
+  /// Parse an affine map instance into 'map'.
+  virtual ParseResult parseAffineMap(AffineMap &map) = 0;
+
+  /// Parse an integer set instance into 'set'.
+  virtual ParseResult printIntegerSet(IntegerSet &set) = 0;
+
   //===--------------------------------------------------------------------===//
   // Type Parsing
   //===--------------------------------------------------------------------===//
@@ -313,6 +325,9 @@ public:
       return emitError(loc, "invalid kind of type specified");
     return success();
   }
+
+  /// Parse a type if present.
+  virtual OptionalParseResult parseOptionalType(Type &result) = 0;
 
   /// Parse a 'x' separated dimension list. This populates the dimension list,
   /// using -1 for the `?` dimensions if `allowDynamic` is set and errors out on

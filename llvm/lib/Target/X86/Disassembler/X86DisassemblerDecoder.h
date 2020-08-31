@@ -19,9 +19,6 @@
 #include "llvm/Support/X86DisassemblerDecoderCommon.h"
 
 namespace llvm {
-
-class MCInstrInfo;
-
 namespace X86Disassembler {
 
 // Accessor functions for various fields of an Intel instruction
@@ -383,6 +380,17 @@ namespace X86Disassembler {
   ENTRY(BND2)         \
   ENTRY(BND3)
 
+#undef  REGS_TMM
+#define REGS_TMM  \
+  ENTRY(TMM0)     \
+  ENTRY(TMM1)     \
+  ENTRY(TMM2)     \
+  ENTRY(TMM3)     \
+  ENTRY(TMM4)     \
+  ENTRY(TMM5)     \
+  ENTRY(TMM6)     \
+  ENTRY(TMM7)
+
 #define ALL_EA_BASES  \
   EA_BASES_16BIT      \
   EA_BASES_32BIT      \
@@ -407,6 +415,7 @@ namespace X86Disassembler {
   REGS_DEBUG          \
   REGS_CONTROL        \
   REGS_BOUND          \
+  REGS_TMM            \
   ENTRY(RIP)
 
 /// All possible values of the base field for effective-address
@@ -505,25 +514,6 @@ enum VectorExtensionType {
   TYPE_XOP          = 0x4
 };
 
-/// Type for the byte reader that the consumer must provide to
-/// the decoder. Reads a single byte from the instruction's address space.
-/// \param arg     A baton that the consumer can associate with any internal
-///                state that it needs.
-/// \param byte    A pointer to a single byte in memory that should be set to
-///                contain the value at address.
-/// \param address The address in the instruction's address space that should
-///                be read from.
-/// \return        -1 if the byte cannot be read for any reason; 0 otherwise.
-typedef int (*byteReader_t)(const void *arg, uint8_t *byte, uint64_t address);
-
-/// Type for the logging function that the consumer can provide to
-/// get debugging output from the decoder.
-/// \param arg A baton that the consumer can associate with any internal
-///            state that it needs.
-/// \param log A string that contains the message.  Will be reused after
-///            the logger returns.
-typedef void (*dlog_t)(void *arg, const char *log);
-
 /// The specification for how to extract and interpret a full instruction and
 /// its operands.
 struct InstructionSpecifier {
@@ -612,11 +602,9 @@ struct InternalInstruction {
   uint8_t                       modRM;
 
   // The SIB byte, used for more complex 32- or 64-bit memory operands
-  bool                          consumedSIB;
   uint8_t                       sib;
 
   // The displacement, used for memory operands
-  bool                          consumedDisplacement;
   int32_t                       displacement;
 
   // Immediates.  There can be two in some cases
@@ -652,19 +640,6 @@ struct InternalInstruction {
 
   ArrayRef<OperandSpecifier> operands;
 };
-
-/// Decode one instruction and store the decoding results in
-/// a buffer provided by the consumer.
-/// \return          Nonzero if there was an error during decode, 0 otherwise.
-int decodeInstruction(InternalInstruction *insn, const MCInstrInfo *mii);
-
-/// Print a message to debugs()
-/// \param file The name of the file printing the debug message.
-/// \param line The line number that printed the debug message.
-/// \param s    The message to print.
-void Debug(const char *file, unsigned line, const char *s);
-
-StringRef GetInstrName(unsigned Opcode, const void *mii);
 
 } // namespace X86Disassembler
 } // namespace llvm

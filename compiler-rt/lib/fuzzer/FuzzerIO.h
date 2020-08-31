@@ -42,7 +42,7 @@ std::string DirName(const std::string &FileName);
 // Returns path to a TmpDir.
 std::string TmpDir();
 
-std::string TempPath(const char *Extension);
+std::string TempPath(const char *Prefix, const char *Extension);
 
 bool IsInterestingCoverageFile(const std::string &FileName);
 
@@ -58,6 +58,7 @@ void RawPrint(const char *Str);
 
 // Platform specific functions:
 bool IsFile(const std::string &Path);
+bool IsDirectory(const std::string &Path);
 size_t FileSize(const std::string &Path);
 
 void ListFilesInDirRecursive(const std::string &Dir, long *Epoch,
@@ -82,6 +83,7 @@ struct SizedFile {
 void GetSizedFilesFromDir(const std::string &Dir, Vector<SizedFile> *V);
 
 char GetSeparator();
+bool IsSeparator(char C);
 // Similar to the basename utility: returns the file name w/o the dir prefix.
 std::string Basename(const std::string &Path);
 

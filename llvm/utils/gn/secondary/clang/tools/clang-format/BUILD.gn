@@ -8,7 +8,5 @@ executable("clang-format") {
     "//clang/lib/Tooling/Core",
     "//llvm/lib/Support",
   ]
-  sources = [
-    "ClangFormat.cpp",
-  ]
+  sources = [ "ClangFormat.cpp" ]
 }

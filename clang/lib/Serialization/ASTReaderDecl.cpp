@@ -281,6 +281,9 @@ namespace clang {
     static Decl *getMostRecentDeclImpl(...);
     static Decl *getMostRecentDecl(Decl *D);
 
+    static void mergeInheritableAttributes(ASTReader &Reader, Decl *D,
+                                           Decl *Previous);
+
     template <typename DeclT>
     static void attachPreviousDeclImpl(ASTReader &Reader,
                                        Redeclarable<DeclT> *D, Decl *Previous,
@@ -365,6 +368,7 @@ namespace clang {
     void VisitCXXConversionDecl(CXXConversionDecl *D);
     void VisitFieldDecl(FieldDecl *FD);
     void VisitMSPropertyDecl(MSPropertyDecl *FD);
+    void VisitMSGuidDecl(MSGuidDecl *D);
     void VisitIndirectFieldDecl(IndirectFieldDecl *FD);
     RedeclarableResult VisitVarDeclImpl(VarDecl *D);
     void VisitVarDecl(VarDecl *VD) { VisitVarDeclImpl(VD); }
@@ -375,6 +379,7 @@ namespace clang {
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     DeclID VisitTemplateDecl(TemplateDecl *D);
     void VisitConceptDecl(ConceptDecl *D);
+    void VisitRequiresExprBodyDecl(RequiresExprBodyDecl *D);
     RedeclarableResult VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitBuiltinTemplateDecl(BuiltinTemplateDecl *D);
@@ -501,8 +506,11 @@ uint64_t ASTDeclReader::GetCurrentCursorOffset() {
 }
 
 void ASTDeclReader::ReadFunctionDefinition(FunctionDecl *FD) {
-  if (Record.readInt())
-    Reader.DefinitionSource[FD] = Loc.F->Kind == ModuleKind::MK_MainFile;
+  if (Record.readInt()) {
+    Reader.DefinitionSource[FD] =
+        Loc.F->Kind == ModuleKind::MK_MainFile ||
+        Reader.getContext().getLangOpts().BuildingPCHWithObjectFile;
+  }
   if (auto *CD = dyn_cast<CXXConstructorDecl>(FD)) {
     CD->setNumCtorInitializers(Record.readInt());
     if (CD->getNumCtorInitializers())
@@ -550,7 +558,7 @@ void ASTDeclReader::Visit(Decl *D) {
 
 void ASTDeclReader::VisitDecl(Decl *D) {
   if (D->isTemplateParameter() || D->isTemplateParameterPack() ||
-      isa<ParmVarDecl>(D)) {
+      isa<ParmVarDecl>(D) || isa<ObjCTypeParamDecl>(D)) {
     // We don't want to deserialize the DeclContext of a template
     // parameter or of a parameter of a function template immediately.   These
     // entities might be used in the formulation of its DeclContext (for
@@ -1278,10 +1286,9 @@ void ASTDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   QualType T = Record.readType();
   TypeSourceInfo *TSI = readTypeSourceInfo();
   D->setType(T, TSI);
-  D->setPropertyAttributes(
-      (ObjCPropertyDecl::PropertyAttributeKind)Record.readInt());
+  D->setPropertyAttributes((ObjCPropertyAttribute::Kind)Record.readInt());
   D->setPropertyAttributesAsWritten(
-      (ObjCPropertyDecl::PropertyAttributeKind)Record.readInt());
+      (ObjCPropertyAttribute::Kind)Record.readInt());
   D->setPropertyImplementation(
       (ObjCPropertyDecl::PropertyControl)Record.readInt());
   DeclarationName GetterName = Record.readDeclarationName();
@@ -1357,6 +1364,19 @@ void ASTDeclReader::VisitMSPropertyDecl(MSPropertyDecl *PD) {
   PD->SetterId = Record.readIdentifier();
 }
 
+void ASTDeclReader::VisitMSGuidDecl(MSGuidDecl *D) {
+  VisitValueDecl(D);
+  D->PartVal.Part1 = Record.readInt();
+  D->PartVal.Part2 = Record.readInt();
+  D->PartVal.Part3 = Record.readInt();
+  for (auto &C : D->PartVal.Part4And5)
+    C = Record.readInt();
+
+  // Add this GUID to the AST context's lookup structure, and merge if needed.
+  if (MSGuidDecl *Existing = Reader.getContext().MSGuidDecls.GetOrInsertNode(D))
+    Reader.getContext().setPrimaryMergedDecl(D, Existing->getCanonicalDecl());
+}
+
 void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
   VisitValueDecl(FD);
 
@@ -1417,8 +1437,11 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
       Reader.getContext().setBlockVarCopyInit(VD, CopyExpr, Record.readInt());
   }
 
-  if (VD->getStorageDuration() == SD_Static && Record.readInt())
-    Reader.DefinitionSource[VD] = Loc.F->Kind == ModuleKind::MK_MainFile;
+  if (VD->getStorageDuration() == SD_Static && Record.readInt()) {
+    Reader.DefinitionSource[VD] =
+        Loc.F->Kind == ModuleKind::MK_MainFile ||
+        Reader.getContext().getLangOpts().BuildingPCHWithObjectFile;
+  }
 
   enum VarKind {
     VarNotTemplate = 0, VarTemplate, StaticDataMemberSpecialization
@@ -1677,8 +1700,11 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.ODRHash = Record.readInt();
   Data.HasODRHash = true;
 
-  if (Record.readInt())
-    Reader.DefinitionSource[D] = Loc.F->Kind == ModuleKind::MK_MainFile;
+  if (Record.readInt()) {
+    Reader.DefinitionSource[D] = 
+        Loc.F->Kind == ModuleKind::MK_MainFile ||
+        Reader.getContext().getLangOpts().BuildingPCHWithObjectFile;
+  }
 
   Data.NumBases = Record.readInt();
   if (Data.NumBases)
@@ -1967,8 +1993,8 @@ void ASTDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
 
 void ASTDeclReader::VisitImportDecl(ImportDecl *D) {
   VisitDecl(D);
-  D->ImportedAndComplete.setPointer(readModule());
-  D->ImportedAndComplete.setInt(Record.readInt());
+  D->ImportedModule = readModule();
+  D->setImportComplete(Record.readInt());
   auto *StoredLocs = D->getTrailingObjects<SourceLocation>();
   for (unsigned I = 0, N = Record.back(); I != N; ++I)
     StoredLocs[I] = readSourceLocation();
@@ -2023,6 +2049,9 @@ void ASTDeclReader::VisitConceptDecl(ConceptDecl *D) {
   VisitTemplateDecl(D);
   D->ConstraintExpr = Record.readExpr();
   mergeMergeable(D);
+}
+
+void ASTDeclReader::VisitRequiresExprBodyDecl(RequiresExprBodyDecl *D) {
 }
 
 ASTDeclReader::RedeclarableResult
@@ -2301,7 +2330,20 @@ void ASTDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
 
   D->setDeclaredWithTypename(Record.readInt());
 
-  // TODO: Concepts: Immediately introduced constraint
+  if (Record.readBool()) {
+    NestedNameSpecifierLoc NNS = Record.readNestedNameSpecifierLoc();
+    DeclarationNameInfo DN = Record.readDeclarationNameInfo();
+    ConceptDecl *NamedConcept = Record.readDeclAs<ConceptDecl>();
+    const ASTTemplateArgumentListInfo *ArgsAsWritten = nullptr;
+    if (Record.readBool())
+        ArgsAsWritten = Record.readASTTemplateArgumentListInfo();
+    Expr *ImmediatelyDeclaredConstraint = Record.readExpr();
+    D->setTypeConstraint(NNS, DN, /*FoundDecl=*/nullptr, NamedConcept,
+                         ArgsAsWritten, ImmediatelyDeclaredConstraint);
+    if ((D->ExpandedParameterPack = Record.readInt()))
+      D->NumExpanded = Record.readInt();
+  }
+
   if (Record.readInt())
     D->setDefaultArgument(readTypeSourceInfo());
 }
@@ -2311,6 +2353,8 @@ void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   // TemplateParmPosition.
   D->setDepth(Record.readInt());
   D->setPosition(Record.readInt());
+  if (D->hasPlaceholderTypeConstraint())
+    D->setPlaceholderTypeConstraint(Record.readExpr());
   if (D->isExpandedParameterPack()) {
     auto TypesAndInfos =
         D->getTrailingObjects<std::pair<QualType, TypeSourceInfo *>>();
@@ -2611,41 +2655,18 @@ void ASTDeclReader::mergeMergeable(Mergeable<T> *D) {
 }
 
 void ASTDeclReader::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
+  Record.readOMPChildren(D->Data);
   VisitDecl(D);
-  unsigned NumVars = D->varlist_size();
-  SmallVector<Expr *, 16> Vars;
-  Vars.reserve(NumVars);
-  for (unsigned i = 0; i != NumVars; ++i) {
-    Vars.push_back(Record.readExpr());
-  }
-  D->setVars(Vars);
 }
 
 void ASTDeclReader::VisitOMPAllocateDecl(OMPAllocateDecl *D) {
+  Record.readOMPChildren(D->Data);
   VisitDecl(D);
-  unsigned NumVars = D->varlist_size();
-  unsigned NumClauses = D->clauselist_size();
-  SmallVector<Expr *, 16> Vars;
-  Vars.reserve(NumVars);
-  for (unsigned i = 0; i != NumVars; ++i) {
-    Vars.push_back(Record.readExpr());
-  }
-  D->setVars(Vars);
-  SmallVector<OMPClause *, 8> Clauses;
-  Clauses.reserve(NumClauses);
-  for (unsigned I = 0; I != NumClauses; ++I)
-    Clauses.push_back(Record.readOMPClause());
-  D->setClauses(Clauses);
 }
 
 void ASTDeclReader::VisitOMPRequiresDecl(OMPRequiresDecl * D) {
+  Record.readOMPChildren(D->Data);
   VisitDecl(D);
-  unsigned NumClauses = D->clauselist_size();
-  SmallVector<OMPClause *, 8> Clauses;
-  Clauses.reserve(NumClauses);
-  for (unsigned I = 0; I != NumClauses; ++I)
-    Clauses.push_back(Record.readOMPClause());
-  D->setClauses(Clauses);
 }
 
 void ASTDeclReader::VisitOMPDeclareReductionDecl(OMPDeclareReductionDecl *D) {
@@ -2666,18 +2687,10 @@ void ASTDeclReader::VisitOMPDeclareReductionDecl(OMPDeclareReductionDecl *D) {
 }
 
 void ASTDeclReader::VisitOMPDeclareMapperDecl(OMPDeclareMapperDecl *D) {
+  Record.readOMPChildren(D->Data);
   VisitValueDecl(D);
-  D->setLocation(readSourceLocation());
-  Expr *MapperVarRefE = Record.readExpr();
-  D->setMapperVarRef(MapperVarRefE);
   D->VarName = Record.readDeclarationName();
   D->PrevDeclInScope = readDeclID();
-  unsigned NumClauses = D->clauselist_size();
-  SmallVector<OMPClause *, 8> Clauses;
-  Clauses.reserve(NumClauses);
-  for (unsigned I = 0; I != NumClauses; ++I)
-    Clauses.push_back(Record.readOMPClause());
-  D->setClauses(Clauses);
 }
 
 void ASTDeclReader::VisitOMPCapturedExprDecl(OMPCapturedExprDecl *D) {
@@ -2724,6 +2737,8 @@ public:
   VersionTuple readVersionTuple() {
     return Reader.readVersionTuple();
   }
+
+  OMPTraitInfo *readOMPTraitInfo() { return Reader.readOMPTraitInfo(); }
 
   template <typename T> T *GetLocalDeclAs(uint32_t LocalID) {
     return Reader.GetLocalDeclAs<T>(LocalID);
@@ -2809,7 +2824,8 @@ static bool isConsumerInterestedIn(ASTContext &Ctx, Decl *D, bool HasBody) {
       isa<PragmaDetectMismatchDecl>(D))
     return true;
   if (isa<OMPThreadPrivateDecl>(D) || isa<OMPDeclareReductionDecl>(D) ||
-      isa<OMPDeclareMapperDecl>(D) || isa<OMPAllocateDecl>(D))
+      isa<OMPDeclareMapperDecl>(D) || isa<OMPAllocateDecl>(D) ||
+      isa<OMPRequiresDecl>(D))
     return !D->getDeclContext()->isFunctionOrMethod();
   if (const auto *Var = dyn_cast<VarDecl>(D))
     return Var->isFileVarDecl() &&
@@ -2834,7 +2850,7 @@ ASTReader::DeclCursorForID(DeclID ID, SourceLocation &Loc) {
   const DeclOffset &DOffs =
       M->DeclOffsets[ID - M->BaseDeclID - NUM_PREDEF_DECL_IDS];
   Loc = TranslateSourceLocation(*M, DOffs.getLocation());
-  return RecordLocation(M, DOffs.BitOffset);
+  return RecordLocation(M, DOffs.getBitOffset(M->DeclsBlockStartOffset));
 }
 
 ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
@@ -2844,11 +2860,12 @@ ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
   return RecordLocation(I->second, GlobalOffset - I->second->GlobalBitOffset);
 }
 
-uint64_t ASTReader::getGlobalBitOffset(ModuleFile &M, uint32_t LocalOffset) {
+uint64_t ASTReader::getGlobalBitOffset(ModuleFile &M, uint64_t LocalOffset) {
   return LocalOffset + M.GlobalBitOffset;
 }
 
-static bool isSameTemplateParameterList(const TemplateParameterList *X,
+static bool isSameTemplateParameterList(const ASTContext &C,
+                                        const TemplateParameterList *X,
                                         const TemplateParameterList *Y);
 
 /// Determine whether two template parameters are similar enough
@@ -2860,7 +2877,34 @@ static bool isSameTemplateParameter(const NamedDecl *X,
 
   if (const auto *TX = dyn_cast<TemplateTypeParmDecl>(X)) {
     const auto *TY = cast<TemplateTypeParmDecl>(Y);
-    return TX->isParameterPack() == TY->isParameterPack();
+    if (TX->isParameterPack() != TY->isParameterPack())
+      return false;
+    if (TX->hasTypeConstraint() != TY->hasTypeConstraint())
+      return false;
+    const TypeConstraint *TXTC = TX->getTypeConstraint();
+    const TypeConstraint *TYTC = TY->getTypeConstraint();
+    if (!TXTC != !TYTC)
+      return false;
+    if (TXTC && TYTC) {
+      if (TXTC->getNamedConcept() != TYTC->getNamedConcept())
+        return false;
+      if (TXTC->hasExplicitTemplateArgs() != TYTC->hasExplicitTemplateArgs())
+        return false;
+      if (TXTC->hasExplicitTemplateArgs()) {
+        const auto *TXTCArgs = TXTC->getTemplateArgsAsWritten();
+        const auto *TYTCArgs = TYTC->getTemplateArgsAsWritten();
+        if (TXTCArgs->NumTemplateArgs != TYTCArgs->NumTemplateArgs)
+          return false;
+        llvm::FoldingSetNodeID XID, YID;
+        for (const auto &ArgLoc : TXTCArgs->arguments())
+          ArgLoc.getArgument().Profile(XID, X->getASTContext());
+        for (const auto &ArgLoc : TYTCArgs->arguments())
+          ArgLoc.getArgument().Profile(YID, Y->getASTContext());
+        if (XID != YID)
+          return false;
+      }
+    }
+    return true;
   }
 
   if (const auto *TX = dyn_cast<NonTypeTemplateParmDecl>(X)) {
@@ -2872,7 +2916,8 @@ static bool isSameTemplateParameter(const NamedDecl *X,
   const auto *TX = cast<TemplateTemplateParmDecl>(X);
   const auto *TY = cast<TemplateTemplateParmDecl>(Y);
   return TX->isParameterPack() == TY->isParameterPack() &&
-         isSameTemplateParameterList(TX->getTemplateParameters(),
+         isSameTemplateParameterList(TX->getASTContext(),
+                                     TX->getTemplateParameters(),
                                      TY->getTemplateParameters());
 }
 
@@ -2925,7 +2970,8 @@ static bool isSameQualifier(const NestedNameSpecifier *X,
 
 /// Determine whether two template parameter lists are similar enough
 /// that they may be used in declarations of the same template.
-static bool isSameTemplateParameterList(const TemplateParameterList *X,
+static bool isSameTemplateParameterList(const ASTContext &C,
+                                        const TemplateParameterList *X,
                                         const TemplateParameterList *Y) {
   if (X->size() != Y->size())
     return false;
@@ -2933,6 +2979,18 @@ static bool isSameTemplateParameterList(const TemplateParameterList *X,
   for (unsigned I = 0, N = X->size(); I != N; ++I)
     if (!isSameTemplateParameter(X->getParam(I), Y->getParam(I)))
       return false;
+
+  const Expr *XRC = X->getRequiresClause();
+  const Expr *YRC = Y->getRequiresClause();
+  if (!XRC != !YRC)
+    return false;
+  if (XRC) {
+    llvm::FoldingSetNodeID XRCID, YRCID;
+    XRC->Profile(XRCID, C, /*Canonical=*/true);
+    YRC->Profile(YRCID, C, /*Canonical=*/true);
+    if (XRCID != YRCID)
+      return false;
+  }
 
   return true;
 }
@@ -2970,7 +3028,7 @@ static bool hasSameOverloadableAttrs(const FunctionDecl *A,
   return true;
 }
 
-/// Determine whether the two declarations refer to the same entity.
+/// Determine whether the two declarations refer to the same entity.pr
 static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   assert(X->getDeclName() == Y->getDeclName() && "Declaration name mismatch!");
 
@@ -3045,6 +3103,19 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     }
 
     ASTContext &C = FuncX->getASTContext();
+
+    const Expr *XRC = FuncX->getTrailingRequiresClause();
+    const Expr *YRC = FuncY->getTrailingRequiresClause();
+    if (!XRC != !YRC)
+      return false;
+    if (XRC) {
+      llvm::FoldingSetNodeID XRCID, YRCID;
+      XRC->Profile(XRCID, C, /*Canonical=*/true);
+      YRC->Profile(YRCID, C, /*Canonical=*/true);
+      if (XRCID != YRCID)
+        return false;
+    }
+
     auto GetTypeAsWritten = [](const FunctionDecl *FD) {
       // Map to the first declaration that we've already merged into this one.
       // The TSI of redeclarations might not match (due to calling conventions
@@ -3068,6 +3139,7 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
         return true;
       return false;
     }
+
     return FuncX->getLinkageInternal() == FuncY->getLinkageInternal() &&
            hasSameOverloadableAttrs(FuncX, FuncY);
   }
@@ -3107,7 +3179,8 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     const auto *TemplateY = cast<TemplateDecl>(Y);
     return isSameEntity(TemplateX->getTemplatedDecl(),
                         TemplateY->getTemplatedDecl()) &&
-           isSameTemplateParameterList(TemplateX->getTemplateParameters(),
+           isSameTemplateParameterList(TemplateX->getASTContext(),
+                                       TemplateX->getTemplateParameters(),
                                        TemplateY->getTemplateParameters());
   }
 
@@ -3441,6 +3514,19 @@ Decl *ASTReader::getMostRecentExistingDecl(Decl *D) {
   return ASTDeclReader::getMostRecentDecl(D->getCanonicalDecl());
 }
 
+void ASTDeclReader::mergeInheritableAttributes(ASTReader &Reader, Decl *D,
+                                               Decl *Previous) {
+  InheritableAttr *NewAttr = nullptr;
+  ASTContext &Context = Reader.getContext();
+  const auto *IA = Previous->getAttr<MSInheritanceAttr>();
+
+  if (IA && !D->hasAttr<MSInheritanceAttr>()) {
+    NewAttr = cast<InheritableAttr>(IA->clone(Context));
+    NewAttr->setInherited(true);
+    D->addAttr(NewAttr);
+  }
+}
+
 template<typename DeclT>
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
                                            Redeclarable<DeclT> *D,
@@ -3599,6 +3685,12 @@ void ASTDeclReader::attachPreviousDecl(ASTReader &Reader, Decl *D,
   if (auto *TD = dyn_cast<TemplateDecl>(D))
     inheritDefaultTemplateArguments(Reader.getContext(),
                                     cast<TemplateDecl>(Previous), TD);
+
+  // If any of the declaration in the chain contains an Inheritable attribute,
+  // it needs to be added to all the declarations in the redeclarable chain.
+  // FIXME: Only the logic of merging MSInheritableAttr is present, it should
+  // be extended for all inheritable attributes.
+  mergeInheritableAttributes(Reader, D, Previous);
 }
 
 template<typename DeclT>
@@ -3788,16 +3880,25 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_FUNCTION_TEMPLATE:
     D = FunctionTemplateDecl::CreateDeserialized(Context, ID);
     break;
-  case DECL_TEMPLATE_TYPE_PARM:
-    D = TemplateTypeParmDecl::CreateDeserialized(Context, ID);
+  case DECL_TEMPLATE_TYPE_PARM: {
+    bool HasTypeConstraint = Record.readInt();
+    D = TemplateTypeParmDecl::CreateDeserialized(Context, ID,
+                                                 HasTypeConstraint);
     break;
-  case DECL_NON_TYPE_TEMPLATE_PARM:
-    D = NonTypeTemplateParmDecl::CreateDeserialized(Context, ID);
-    break;
-  case DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK:
+  }
+  case DECL_NON_TYPE_TEMPLATE_PARM: {
+    bool HasTypeConstraint = Record.readInt();
     D = NonTypeTemplateParmDecl::CreateDeserialized(Context, ID,
-                                                    Record.readInt());
+                                                    HasTypeConstraint);
     break;
+  }
+  case DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK: {
+    bool HasTypeConstraint = Record.readInt();
+    D = NonTypeTemplateParmDecl::CreateDeserialized(Context, ID,
+                                                    Record.readInt(),
+                                                    HasTypeConstraint);
+    break;
+  }
   case DECL_TEMPLATE_TEMPLATE_PARM:
     D = TemplateTemplateParmDecl::CreateDeserialized(Context, ID);
     break;
@@ -3810,6 +3911,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     break;
   case DECL_CONCEPT:
     D = ConceptDecl::CreateDeserialized(Context, ID);
+    break;
+  case DECL_REQUIRES_EXPR_BODY:
+    D = RequiresExprBodyDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_STATIC_ASSERT:
     D = StaticAssertDecl::CreateDeserialized(Context, ID);
@@ -3877,6 +3981,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_MS_PROPERTY:
     D = MSPropertyDecl::CreateDeserialized(Context, ID);
     break;
+  case DECL_MS_GUID:
+    D = MSGuidDecl::CreateDeserialized(Context, ID);
+    break;
   case DECL_CAPTURED:
     D = CapturedDecl::CreateDeserialized(Context, ID, Record.readInt());
     break;
@@ -3891,24 +3998,35 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     // locations.
     D = ImportDecl::CreateDeserialized(Context, ID, Record.back());
     break;
-  case DECL_OMP_THREADPRIVATE:
-    D = OMPThreadPrivateDecl::CreateDeserialized(Context, ID, Record.readInt());
+  case DECL_OMP_THREADPRIVATE: {
+    Record.skipInts(1);
+    unsigned NumChildren = Record.readInt();
+    Record.skipInts(1);
+    D = OMPThreadPrivateDecl::CreateDeserialized(Context, ID, NumChildren);
     break;
+  }
   case DECL_OMP_ALLOCATE: {
-    unsigned NumVars = Record.readInt();
     unsigned NumClauses = Record.readInt();
+    unsigned NumVars = Record.readInt();
+    Record.skipInts(1);
     D = OMPAllocateDecl::CreateDeserialized(Context, ID, NumVars, NumClauses);
     break;
   }
-  case DECL_OMP_REQUIRES:
-    D = OMPRequiresDecl::CreateDeserialized(Context, ID, Record.readInt());
+  case DECL_OMP_REQUIRES: {
+    unsigned NumClauses = Record.readInt();
+    Record.skipInts(2);
+    D = OMPRequiresDecl::CreateDeserialized(Context, ID, NumClauses);
     break;
+  }
   case DECL_OMP_DECLARE_REDUCTION:
     D = OMPDeclareReductionDecl::CreateDeserialized(Context, ID);
     break;
-  case DECL_OMP_DECLARE_MAPPER:
-    D = OMPDeclareMapperDecl::CreateDeserialized(Context, ID, Record.readInt());
+  case DECL_OMP_DECLARE_MAPPER: {
+    unsigned NumClauses = Record.readInt();
+    Record.skipInts(2);
+    D = OMPDeclareMapperDecl::CreateDeserialized(Context, ID, NumClauses);
     break;
+  }
   case DECL_OMP_CAPTUREDEXPR:
     D = OMPCapturedExprDecl::CreateDeserialized(Context, ID);
     break;
@@ -4548,12 +4666,11 @@ void ASTDeclReader::UpdateDecl(Decl *D,
     }
 
     case UPD_DECL_MARKED_OPENMP_DECLARETARGET: {
-      OMPDeclareTargetDeclAttr::MapTypeTy MapType =
-          static_cast<OMPDeclareTargetDeclAttr::MapTypeTy>(Record.readInt());
-      OMPDeclareTargetDeclAttr::DevTypeTy DevType =
-          static_cast<OMPDeclareTargetDeclAttr::DevTypeTy>(Record.readInt());
+      auto MapType = Record.readEnum<OMPDeclareTargetDeclAttr::MapTypeTy>();
+      auto DevType = Record.readEnum<OMPDeclareTargetDeclAttr::DevTypeTy>();
+      unsigned Level = Record.readInt();
       D->addAttr(OMPDeclareTargetDeclAttr::CreateImplicit(
-          Reader.getContext(), MapType, DevType, readSourceRange(),
+          Reader.getContext(), MapType, DevType, Level, readSourceRange(),
           AttributeCommonInfo::AS_Pragma));
       break;
     }

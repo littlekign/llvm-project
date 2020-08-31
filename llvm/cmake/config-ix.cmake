@@ -9,11 +9,12 @@ include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckStructHasMember)
 include(CheckCCompilerFlag)
+include(CMakePushCheckState)
 
 include(CheckCompilerVersion)
 include(HandleLLVMStdlib)
 
-if( UNIX AND NOT (BEOS OR HAIKU) )
+if( UNIX AND NOT (APPLE OR BEOS OR HAIKU) )
   # Used by check_symbol_exists:
   list(APPEND CMAKE_REQUIRED_LIBRARIES "m")
 endif()
@@ -53,6 +54,7 @@ check_include_file(sys/resource.h HAVE_SYS_RESOURCE_H)
 check_include_file(sys/stat.h HAVE_SYS_STAT_H)
 check_include_file(sys/time.h HAVE_SYS_TIME_H)
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
+check_include_file(sysexits.h HAVE_SYSEXITS_H)
 check_include_file(termios.h HAVE_TERMIOS_H)
 check_include_file(unistd.h HAVE_UNISTD_H)
 check_include_file(valgrind/valgrind.h HAVE_VALGRIND_VALGRIND_H)
@@ -112,6 +114,27 @@ if(HAVE_LIBPTHREAD)
   set(THREADS_HAVE_PTHREAD_ARG Off)
   find_package(Threads REQUIRED)
   set(LLVM_PTHREAD_LIB ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
+if(LLVM_ENABLE_ZLIB)
+  if(LLVM_ENABLE_ZLIB STREQUAL FORCE_ON)
+    find_package(ZLIB REQUIRED)
+  elseif(NOT LLVM_USE_SANITIZER MATCHES "Memory.*")
+    find_package(ZLIB)
+  endif()
+  if(ZLIB_FOUND)
+    # Check if zlib we found is usable; for example, we may have found a 32-bit
+    # library on a 64-bit system which would result in a link-time failure.
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_INCLUDES ${ZLIB_INCLUDE_DIRS})
+    set(CMAKE_REQUIRED_LIBRARIES ${ZLIB_LIBRARY})
+    check_symbol_exists(compress2 zlib.h HAVE_ZLIB)
+    cmake_pop_check_state()
+    if(LLVM_ENABLE_ZLIB STREQUAL FORCE_ON AND NOT HAVE_ZLIB)
+      message(FATAL_ERROR "Failed to configure zlib")
+    endif()
+  endif()
+  set(LLVM_ENABLE_ZLIB "${HAVE_ZLIB}")
 endif()
 
 # Don't look for these libraries if we're using MSan, since uninstrumented third
@@ -256,8 +279,6 @@ if( LLVM_USING_GLIBC )
   list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 endif()
 # This check requires _GNU_SOURCE
-check_symbol_exists(sched_getaffinity sched.h HAVE_SCHED_GETAFFINITY)
-check_symbol_exists(CPU_COUNT sched.h HAVE_CPU_COUNT)
 if (NOT PURE_WINDOWS)
   if (LLVM_PTHREAD_LIB)
     list(APPEND CMAKE_REQUIRED_LIBRARIES ${LLVM_PTHREAD_LIB})
@@ -469,7 +490,7 @@ if( MSVC )
   # though that we should handle it.  We do so by simply checking that
   # the DIA SDK folder exists.  Should this happen you will need to
   # uninstall VS 2012 and then re-install VS 2013.
-  if (IS_DIRECTORY ${MSVC_DIA_SDK_DIR})
+  if (IS_DIRECTORY "${MSVC_DIA_SDK_DIR}")
     set(HAVE_DIA_SDK 1)
   else()
     set(HAVE_DIA_SDK 0)
@@ -499,24 +520,6 @@ if( LLVM_ENABLE_THREADS )
   message(STATUS "Threads enabled.")
 else( LLVM_ENABLE_THREADS )
   message(STATUS "Threads disabled.")
-endif()
-
-if(LLVM_ENABLE_ZLIB)
-  if(LLVM_ENABLE_ZLIB STREQUAL FORCE_ON)
-    find_package(ZLIB REQUIRED)
-  else()
-    find_package(ZLIB)
-  endif()
-
-  if(ZLIB_FOUND)
-    set(LLVM_ENABLE_ZLIB "YES" CACHE STRING
-      "Use zlib for compression/decompression if available. Can be ON, OFF, or FORCE_ON"
-      FORCE)
-  else()
-    set(LLVM_ENABLE_ZLIB "NO" CACHE STRING
-      "Use zlib for compression/decompression if available. Can be ON, OFF, or FORCE_ON"
-      FORCE)
-  endif()
 endif()
 
 if (LLVM_ENABLE_DOXYGEN)
@@ -634,7 +637,7 @@ function(find_python_module module)
     return()
   endif()
 
-  execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c" "import ${module}"
+  execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import ${module}"
     RESULT_VARIABLE status
     ERROR_QUIET)
 

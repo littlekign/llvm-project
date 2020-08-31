@@ -1,6 +1,6 @@
 //===- Passes.h - Linalg pass entry points ----------------------*- C++ -*-===//
 //
-// Part of the MLIR Project, under the Apache License v2.0 with LLVM Exceptions.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
@@ -13,36 +13,59 @@
 #ifndef MLIR_DIALECT_LINALG_PASSES_H_
 #define MLIR_DIALECT_LINALG_PASSES_H_
 
-#include "mlir/Support/LLVM.h"
-#include "llvm/ADT/ArrayRef.h"
+#include "mlir/Pass/Pass.h"
 
 namespace mlir {
-class FuncOp;
-class ModuleOp;
-template <typename T> class OpPassBase;
+std::unique_ptr<OperationPass<FuncOp>> createLinalgFoldUnitExtentDimsPass();
 
-namespace linalg {
-std::unique_ptr<OpPassBase<FuncOp>> createLinalgFusionPass();
+std::unique_ptr<OperationPass<FuncOp>> createLinalgFusionPass();
+std::unique_ptr<Pass> createLinalgFusionOfTensorOpsPass();
 
-std::unique_ptr<OpPassBase<FuncOp>>
+std::unique_ptr<OperationPass<FuncOp>>
 createLinalgTilingPass(ArrayRef<int64_t> tileSizes = {});
 
-std::unique_ptr<OpPassBase<FuncOp>>
-createLinalgPromotionPass(bool dynamicBuffers);
+std::unique_ptr<OperationPass<FuncOp>>
+createLinalgTilingToParallelLoopsPass(ArrayRef<int64_t> tileSizes = {});
 
-/// Create a pass to convert Linalg operations to loop.for loops and
+std::unique_ptr<OperationPass<FuncOp>>
+createLinalgPromotionPass(bool dynamicBuffers, bool useAlloca);
+std::unique_ptr<OperationPass<FuncOp>> createLinalgPromotionPass();
+
+/// Create a pass to convert Linalg operations to scf.for loops and
 /// std.load/std.store accesses.
-std::unique_ptr<OpPassBase<FuncOp>> createConvertLinalgToLoopsPass();
+std::unique_ptr<OperationPass<FuncOp>> createConvertLinalgToLoopsPass();
+
+/// Create a pass to convert Linalg operations to scf.parallel loops and
+/// std.load/std.store accesses.
+std::unique_ptr<OperationPass<FuncOp>> createConvertLinalgToParallelLoopsPass();
 
 /// Create a pass to convert Linalg operations to affine.for loops and
 /// affine_load/affine_store accesses.
 /// Placeholder for now, this is NYI.
-std::unique_ptr<OpPassBase<FuncOp>> createConvertLinalgToAffineLoopsPass();
+std::unique_ptr<OperationPass<FuncOp>> createConvertLinalgToAffineLoopsPass();
 
-/// Create a pass to convert Linalg operations to the LLVMIR dialect.
-std::unique_ptr<OpPassBase<ModuleOp>> createConvertLinalgToLLVMPass();
+/// Create a pass to convert Linalg operations which work on tensors to use
+/// buffers instead.
+std::unique_ptr<OperationPass<ModuleOp>>
+createConvertLinalgOnTensorsToBuffersPass();
 
-} // namespace linalg
+/// Patterns for fusing linalg operation on tensors.
+void populateLinalgTensorOpsFusionPatterns(MLIRContext *context,
+                                           OwningRewritePatternList &patterns);
+
+/// Patterns to fold unit-extent dimensions in operands/results of linalg ops on
+/// tensors.
+void populateLinalgFoldUnitExtentDimsPatterns(
+    MLIRContext *context, OwningRewritePatternList &patterns);
+
+//===----------------------------------------------------------------------===//
+// Registration
+//===----------------------------------------------------------------------===//
+
+/// Generate the code for registering passes.
+#define GEN_PASS_REGISTRATION
+#include "mlir/Dialect/Linalg/Passes.h.inc"
+
 } // namespace mlir
 
 #endif // MLIR_DIALECT_LINALG_PASSES_H_

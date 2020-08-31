@@ -33,6 +33,10 @@ add_llvm_tool(llvm-objcopy
   MachO/MachOWriter.cpp
   MachO/MachOLayoutBuilder.cpp
   MachO/Object.cpp
+  wasm/Object.cpp
+  wasm/Reader.cpp
+  wasm/Writer.cpp
+  wasm/WasmObjcopy.cpp
   DEPENDS
   ObjcopyOptsTableGen
   InstallNameToolOptsTableGen
@@ -45,4 +49,8 @@ add_llvm_tool_symlink(llvm-strip llvm-objcopy)
 if(LLVM_INSTALL_BINUTILS_SYMLINKS)
   add_llvm_tool_symlink(objcopy llvm-objcopy)
   add_llvm_tool_symlink(strip llvm-objcopy)
+endif()
+
+if(LLVM_INSTALL_CCTOOLS_SYMLINKS)
+  add_llvm_tool_symlink(install_name_tool llvm-install-name-tool)
 endif()

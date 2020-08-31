@@ -1,4 +1,4 @@
-//===-- ProcessWindows.cpp --------------------------------------*- C++ -*-===//
+//===-- ProcessWindows.cpp ------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -43,6 +43,8 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+LLDB_PLUGIN_DEFINE_ADV(ProcessWindows, ProcessWindowsCommon)
 
 namespace {
 std::string GetProcessExecutableName(HANDLE process_handle) {
@@ -148,6 +150,9 @@ lldb_private::ConstString ProcessWindows::GetPluginName() {
 uint32_t ProcessWindows::GetPluginVersion() { return 1; }
 
 Status ProcessWindows::EnableBreakpointSite(BreakpointSite *bp_site) {
+  if (bp_site->HardwareRequired())
+    return Status("Hardware breakpoints are not supported.");
+
   Log *log = ProcessWindowsLog::GetLogIfAny(WINDOWS_LOG_BREAKPOINTS);
   LLDB_LOG(log, "bp_site = {0:x}, id={1}, addr={2:x}", bp_site,
            bp_site->GetID(), bp_site->GetLoadAddress());

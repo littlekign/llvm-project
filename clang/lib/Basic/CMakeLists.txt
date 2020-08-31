@@ -12,10 +12,10 @@ set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/VCSVersion.inc")
 
 set(generate_vcs_version_script "${LLVM_CMAKE_PATH}/GenerateVersionFromVCS.cmake")
 
-if(llvm_vc)
+if(llvm_vc AND LLVM_APPEND_VC_REV)
   set(llvm_source_dir ${LLVM_MAIN_SRC_DIR})
 endif()
-if(clang_vc)
+if(clang_vc AND LLVM_APPEND_VC_REV)
   set(clang_source_dir ${CLANG_SOURCE_DIR})
 endif()
 
@@ -45,9 +45,9 @@ add_clang_library(clangBasic
   Diagnostic.cpp
   DiagnosticIDs.cpp
   DiagnosticOptions.cpp
+  ExpressionTraits.cpp
   FileManager.cpp
   FileSystemStatCache.cpp
-  FixedPoint.cpp
   IdentifierTable.cpp
   LangOptions.cpp
   LangStandards.cpp
@@ -61,6 +61,7 @@ add_clang_library(clangBasic
   SourceLocation.cpp
   SourceManager.cpp
   Stack.cpp
+  TargetID.cpp
   TargetInfo.cpp
   Targets.cpp
   Targets/AArch64.cpp
@@ -83,14 +84,19 @@ add_clang_library(clangBasic
   Targets/Sparc.cpp
   Targets/SystemZ.cpp
   Targets/TCE.cpp
+  Targets/VE.cpp
   Targets/WebAssembly.cpp
   Targets/X86.cpp
   Targets/XCore.cpp
   TokenKinds.cpp
+  TypeTraits.cpp
   Version.cpp
   Warnings.cpp
   XRayInstr.cpp
   XRayLists.cpp
   ${version_inc}
+
+  DEPENDS
+  omp_gen
   )
 

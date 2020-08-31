@@ -1,6 +1,6 @@
 //===- NVVMDialect.h - MLIR NVVM IR dialect ---------------------*- C++ -*-===//
 //
-// Part of the MLIR Project, under the Apache License v2.0 with LLVM Exceptions.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
@@ -14,8 +14,11 @@
 #ifndef MLIR_DIALECT_LLVMIR_NVVMDIALECT_H_
 #define MLIR_DIALECT_LLVMIR_NVVMDIALECT_H_
 
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/OpDefinition.h"
+#include "mlir/Interfaces/SideEffectInterfaces.h"
+
 namespace mlir {
 namespace NVVM {
 
@@ -23,12 +26,7 @@ namespace NVVM {
 #define GET_OP_CLASSES
 #include "mlir/Dialect/LLVMIR/NVVMOps.h.inc"
 
-class NVVMDialect : public Dialect {
-public:
-  explicit NVVMDialect(MLIRContext *context);
-
-  static StringRef getDialectNamespace() { return "nvvm"; }
-};
+#include "mlir/Dialect/LLVMIR/NVVMOpsDialect.h.inc"
 
 } // namespace NVVM
 } // namespace mlir

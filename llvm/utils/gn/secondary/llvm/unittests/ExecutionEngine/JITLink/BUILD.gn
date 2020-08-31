@@ -9,7 +9,5 @@ unittest("JITLinkTests") {
     "//llvm/lib/Target:TargetsToBuild",
     "//llvm/lib/Testing/Support",
   ]
-  sources = [
-    "LinkGraphTests.cpp",
-  ]
+  sources = [ "LinkGraphTests.cpp" ]
 }

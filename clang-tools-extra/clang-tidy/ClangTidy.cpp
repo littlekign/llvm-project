@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangTidy.h"
+#include "ClangTidyCheck.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
 #include "ClangTidyProfiling.h"
@@ -106,7 +107,8 @@ public:
               DiagPrinter),
         SourceMgr(Diags, Files), Context(Context), ApplyFixes(ApplyFixes),
         TotalFixes(0), AppliedFixes(0), WarningsAsErrors(0) {
-    DiagOpts->ShowColors = llvm::sys::Process::StandardOutHasColors();
+    DiagOpts->ShowColors = Context.getOptions().UseColor.getValueOr(
+        llvm::sys::Process::StandardOutHasColors());
     DiagPrinter->BeginSourceFile(LangOpts);
   }
 
@@ -121,6 +123,8 @@ public:
     {
       auto Level = static_cast<DiagnosticsEngine::Level>(Error.DiagLevel);
       std::string Name = Error.DiagnosticName;
+      if (!Error.EnabledDiagnosticAliases.empty())
+        Name += "," + llvm::join(Error.EnabledDiagnosticAliases, ",");
       if (Error.IsWarningAsError) {
         Name += ",-warnings-as-errors";
         Level = DiagnosticsEngine::Error;
@@ -325,10 +329,11 @@ static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
                                          AnalyzerOptionsRef AnalyzerOptions) {
   StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
   for (const auto &Opt : Opts.CheckOptions) {
-    StringRef OptName(Opt.first);
-    if (!OptName.startswith(AnalyzerPrefix))
+    StringRef OptName(Opt.getKey());
+    if (!OptName.consume_front(AnalyzerPrefix))
       continue;
-    AnalyzerOptions->Config[OptName.substr(AnalyzerPrefix.size())] = Opt.second;
+    // Analyzer options are always local options so we can ignore priority.
+    AnalyzerOptions->Config[OptName] = Opt.getValue().Value;
   }
 }
 
@@ -359,7 +364,7 @@ static CheckersList getAnalyzerCheckersAndPackages(ClangTidyContext &Context,
 
     if (CheckName.startswith("core") ||
         Context.isCheckEnabled(ClangTidyCheckName)) {
-      List.emplace_back(CheckName, true);
+      List.emplace_back(std::string(CheckName), true);
     }
   }
   return List;
@@ -409,6 +414,8 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   }
 
   for (auto &Check : Checks) {
+    if (!Check->isLanguageVersionSupported(Context.getLangOpts()))
+      continue;
     Check->registerMatchers(&*Finder);
     Check->registerPPCallbacks(*SM, PP, ModuleExpanderPP);
   }
@@ -442,8 +449,8 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
 std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
   std::vector<std::string> CheckNames;
   for (const auto &CheckFactory : *CheckFactories) {
-    if (Context.isCheckEnabled(CheckFactory.first))
-      CheckNames.push_back(CheckFactory.first);
+    if (Context.isCheckEnabled(CheckFactory.getKey()))
+      CheckNames.emplace_back(CheckFactory.getKey());
   }
 
 #if CLANG_ENABLE_STATIC_ANALYZER
@@ -452,7 +459,7 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
     CheckNames.push_back(AnalyzerCheckNamePrefix + AnalyzerCheck.first);
 #endif // CLANG_ENABLE_STATIC_ANALYZER
 
-  std::sort(CheckNames.begin(), CheckNames.end());
+  llvm::sort(CheckNames);
   return CheckNames;
 }
 
@@ -596,7 +603,7 @@ void exportReplacements(const llvm::StringRef MainFilePath,
                         const std::vector<ClangTidyError> &Errors,
                         raw_ostream &OS) {
   TranslationUnitDiagnostics TUD;
-  TUD.MainSourceFile = MainFilePath;
+  TUD.MainSourceFile = std::string(MainFilePath);
   for (const auto &Error : Errors) {
     tooling::Diagnostic Diag = Error;
     TUD.Diagnostics.insert(TUD.Diagnostics.end(), Diag);

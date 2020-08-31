@@ -13,7 +13,6 @@
 #ifndef LLVM_LIB_TABLEGEN_TGLEXER_H
 #define LLVM_LIB_TABLEGEN_TGLEXER_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/DataTypes.h"
@@ -22,10 +21,11 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace llvm {
+template <typename T> class ArrayRef;
 class SourceMgr;
-class SMLoc;
 class Twine;
 
 namespace tgtok {
@@ -40,13 +40,15 @@ namespace tgtok {
     l_paren, r_paren,   // ( )
     less, greater,      // < >
     colon, semi,        // : ;
-    comma, period,      // , .
+    comma, dot,         // , .
     equal, question,    // = ?
     paste,              // #
+    dotdotdot,          // ...
 
-    // Keywords.
+    // Keywords. ('ElseKW' is named to distinguish it from the existing 'Else'
+    // that means the preprocessor #else.)
     Bit, Bits, Class, Code, Dag, Def, Foreach, Defm, Field, In, Int, Let, List,
-    MultiClass, String, Defset,
+    MultiClass, String, Defset, Defvar, If, Then, ElseKW,
 
     // !keywords.
     XConcat, XADD, XMUL, XAND, XOR, XSRA, XSRL, XSHL, XListConcat, XListSplat,

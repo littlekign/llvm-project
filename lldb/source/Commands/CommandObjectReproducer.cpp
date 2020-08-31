@@ -1,4 +1,4 @@
-//===-- CommandObjectReproducer.cpp -----------------------------*- C++ -*-===//
+//===-- CommandObjectReproducer.cpp ---------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,13 +8,14 @@
 
 #include "CommandObjectReproducer.h"
 
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/OptionParser.h"
-#include "lldb/Utility/GDBRemote.h"
-#include "lldb/Utility/Reproducer.h"
-
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionArgParser.h"
+#include "lldb/Utility/GDBRemote.h"
+#include "lldb/Utility/ProcessInfo.h"
+#include "lldb/Utility/Reproducer.h"
 
 #include <csignal>
 
@@ -26,9 +27,12 @@ using namespace lldb_private::repro;
 enum ReproducerProvider {
   eReproducerProviderCommands,
   eReproducerProviderFiles,
+  eReproducerProviderSymbolFiles,
   eReproducerProviderGDB,
+  eReproducerProviderProcessInfo,
   eReproducerProviderVersion,
   eReproducerProviderWorkingDirectory,
+  eReproducerProviderHomeDirectory,
   eReproducerProviderNone
 };
 
@@ -44,9 +48,19 @@ static constexpr OptionEnumValueElement g_reproducer_provider_type[] = {
         "Files",
     },
     {
+        eReproducerProviderSymbolFiles,
+        "symbol-files",
+        "Symbol Files",
+    },
+    {
         eReproducerProviderGDB,
         "gdb",
         "GDB Remote Packets",
+    },
+    {
+        eReproducerProviderProcessInfo,
+        "processes",
+        "Process Info",
     },
     {
         eReproducerProviderVersion,
@@ -57,6 +71,11 @@ static constexpr OptionEnumValueElement g_reproducer_provider_type[] = {
         eReproducerProviderWorkingDirectory,
         "cwd",
         "Working Directory",
+    },
+    {
+        eReproducerProviderHomeDirectory,
+        "home",
+        "Home Directory",
     },
     {
         eReproducerProviderNone,
@@ -96,6 +115,24 @@ static constexpr OptionEnumValues ReproducerSignalType() {
 
 #define LLDB_OPTIONS_reproducer_xcrash
 #include "CommandOptions.inc"
+
+template <typename T>
+llvm::Expected<T> static ReadFromYAML(StringRef filename) {
+  auto error_or_file = MemoryBuffer::getFile(filename);
+  if (auto err = error_or_file.getError()) {
+    return errorCodeToError(err);
+  }
+
+  T t;
+  yaml::Input yin((*error_or_file)->getBuffer());
+  yin >> t;
+
+  if (auto err = yin.error()) {
+    return errorCodeToError(err);
+  }
+
+  return t;
+}
 
 class CommandObjectReproducerGenerate : public CommandObjectParsed {
 public:
@@ -258,6 +295,18 @@ protected:
       result.GetOutputStream() << "Reproducer is off.\n";
     }
 
+    if (r.IsCapturing() || r.IsReplaying()) {
+      result.GetOutputStream()
+          << "Path: " << r.GetReproducerPath().GetPath() << '\n';
+    }
+
+    // Auto generate is hidden unless enabled because this is mostly for
+    // development and testing.
+    if (Generator *g = r.GetGenerator()) {
+      if (g->IsAutoGenerate())
+        result.GetOutputStream() << "Auto generate: on\n";
+    }
+
     result.SetStatus(eReturnStatusSuccessFinishResult);
     return result.Succeeded();
   }
@@ -384,6 +433,29 @@ protected:
       result.SetStatus(eReturnStatusSuccessFinishResult);
       return true;
     }
+    case eReproducerProviderSymbolFiles: {
+      Expected<std::string> symbol_files =
+          loader->LoadBuffer<SymbolFileProvider>();
+      if (!symbol_files) {
+        SetError(result, symbol_files.takeError());
+        return false;
+      }
+
+      std::vector<SymbolFileProvider::Entry> entries;
+      llvm::yaml::Input yin(*symbol_files);
+      yin >> entries;
+
+      for (const auto &entry : entries) {
+        result.AppendMessageWithFormat("- uuid:        %s\n",
+                                       entry.uuid.c_str());
+        result.AppendMessageWithFormat("  module path: %s\n",
+                                       entry.module_path.c_str());
+        result.AppendMessageWithFormat("  symbol path: %s\n",
+                                       entry.symbol_path.c_str());
+      }
+      result.SetStatus(eReturnStatusSuccessFinishResult);
+      return true;
+    }
     case eReproducerProviderVersion: {
       Expected<std::string> version = loader->LoadBuffer<VersionProvider>();
       if (!version) {
@@ -396,7 +468,7 @@ protected:
     }
     case eReproducerProviderWorkingDirectory: {
       Expected<std::string> cwd =
-          loader->LoadBuffer<WorkingDirectoryProvider>();
+          repro::GetDirectoryFrom<WorkingDirectoryProvider>(loader);
       if (!cwd) {
         SetError(result, cwd.takeError());
         return false;
@@ -405,13 +477,24 @@ protected:
       result.SetStatus(eReturnStatusSuccessFinishResult);
       return true;
     }
+    case eReproducerProviderHomeDirectory: {
+      Expected<std::string> home =
+          repro::GetDirectoryFrom<HomeDirectoryProvider>(loader);
+      if (!home) {
+        SetError(result, home.takeError());
+        return false;
+      }
+      result.AppendMessage(*home);
+      result.SetStatus(eReturnStatusSuccessFinishResult);
+      return true;
+    }
     case eReproducerProviderCommands: {
       std::unique_ptr<repro::MultiLoader<repro::CommandProvider>> multi_loader =
           repro::MultiLoader<repro::CommandProvider>::Create(loader);
       if (!multi_loader) {
         SetError(result,
-                 make_error<StringError>(llvm::inconvertibleErrorCode(),
-                                         "Unable to create command loader."));
+                 make_error<StringError>("Unable to create command loader.",
+                                         llvm::inconvertibleErrorCode()));
         return false;
       }
 
@@ -436,25 +519,51 @@ protected:
       std::unique_ptr<repro::MultiLoader<repro::GDBRemoteProvider>>
           multi_loader =
               repro::MultiLoader<repro::GDBRemoteProvider>::Create(loader);
+
+      if (!multi_loader) {
+        SetError(result,
+                 make_error<StringError>("Unable to create GDB loader.",
+                                         llvm::inconvertibleErrorCode()));
+        return false;
+      }
+
       llvm::Optional<std::string> gdb_file;
       while ((gdb_file = multi_loader->GetNextFile())) {
-        auto error_or_file = MemoryBuffer::getFile(*gdb_file);
-        if (auto err = error_or_file.getError()) {
-          SetError(result, errorCodeToError(err));
+        if (llvm::Expected<std::vector<GDBRemotePacket>> packets =
+                ReadFromYAML<std::vector<GDBRemotePacket>>(*gdb_file)) {
+          for (GDBRemotePacket &packet : *packets) {
+            packet.Dump(result.GetOutputStream());
+          }
+        } else {
+          SetError(result, packets.takeError());
           return false;
         }
+      }
 
-        std::vector<GDBRemotePacket> packets;
-        yaml::Input yin((*error_or_file)->getBuffer());
-        yin >> packets;
+      result.SetStatus(eReturnStatusSuccessFinishResult);
+      return true;
+    }
+    case eReproducerProviderProcessInfo: {
+      std::unique_ptr<repro::MultiLoader<repro::ProcessInfoProvider>>
+          multi_loader =
+              repro::MultiLoader<repro::ProcessInfoProvider>::Create(loader);
 
-        if (auto err = yin.error()) {
-          SetError(result, errorCodeToError(err));
+      if (!multi_loader) {
+        SetError(result, make_error<StringError>(
+                             llvm::inconvertibleErrorCode(),
+                             "Unable to create process info loader."));
+        return false;
+      }
+
+      llvm::Optional<std::string> process_file;
+      while ((process_file = multi_loader->GetNextFile())) {
+        if (llvm::Expected<ProcessInstanceInfoList> infos =
+                ReadFromYAML<ProcessInstanceInfoList>(*process_file)) {
+          for (ProcessInstanceInfo info : *infos)
+            info.Dump(result.GetOutputStream(), HostInfo::GetUserIDResolver());
+        } else {
+          SetError(result, infos.takeError());
           return false;
-        }
-
-        for (GDBRemotePacket &packet : packets) {
-          packet.Dump(result.GetOutputStream());
         }
       }
 

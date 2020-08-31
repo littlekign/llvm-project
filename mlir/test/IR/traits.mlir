@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -split-input-file -verify-diagnostics | FileCheck %s
+// RUN: mlir-opt -allow-unregistered-dialect %s -split-input-file -verify-diagnostics | FileCheck %s
 
 // CHECK: succeededSameOperandsElementType
 func @succeededSameOperandsElementType(%t10x10 : tensor<10x10xf32>, %t1f: tensor<1xf32>, %v1: vector<1xf32>, %t1i: tensor<1xi32>, %sf: f32) {
@@ -24,7 +24,7 @@ func @failedSameOperandElementType(%t1f: tensor<1xf32>, %t1i: tensor<1xi32>) {
 // -----
 
 func @failedSameOperandAndResultElementType_no_operands() {
-  // expected-error@+1 {{expected 1 or more operands}}
+  // expected-error@+1 {{expected 2 operands, but found 0}}
   "test.same_operand_element_type"() : () -> tensor<1xf32>
 }
 
@@ -175,6 +175,39 @@ func @failedHasParent_wrong_parent() {
 
 // -----
 
+// CHECK: succeededParentOneOf
+func @succeededParentOneOf() {
+  "test.parent"() ({
+    "test.child_with_parent_one_of"() : () -> ()
+    "test.finish"() : () -> ()
+   }) : () -> ()
+  return
+}
+
+// -----
+
+// CHECK: succeededParent1OneOf
+func @succeededParent1OneOf() {
+  "test.parent1"() ({
+    "test.child_with_parent_one_of"() : () -> ()
+    "test.finish"() : () -> ()
+   }) : () -> ()
+  return
+}
+
+// -----
+
+func @failedParentOneOf_wrong_parent1() {
+  "some.otherop"() ({
+    // expected-error@+1 {{'test.child_with_parent_one_of' op expects parent op to be one of 'test.parent, test.parent1'}}
+    "test.child_with_parent_one_of"() : () -> ()
+    "test.finish"() : () -> ()
+   }) : () -> ()
+}
+
+
+// -----
+
 func @failedSingleBlockImplicitTerminator_empty_block() {
    // expected-error@+1 {{'test.SingleBlockImplicitTerminator' op expects a non-empty block}}
   "test.SingleBlockImplicitTerminator"() ({
@@ -204,6 +237,30 @@ func @failedSingleBlockImplicitTerminator_missing_terminator() {
     "test.non_existent_op"() : () -> ()
   }) : () -> ()
 }
+
+// -----
+
+// Test the invariants of operations with the Symbol Trait.
+
+// expected-error@+1 {{requires string attribute 'sym_name'}}
+"test.symbol"() {} : () -> ()
+
+// -----
+
+// expected-error@+1 {{requires visibility attribute 'sym_visibility' to be a string attribute}}
+"test.symbol"() {sym_name = "foo_2", sym_visibility} : () -> ()
+
+// -----
+
+// expected-error@+1 {{visibility expected to be one of ["public", "private", "nested"]}}
+"test.symbol"() {sym_name = "foo_2", sym_visibility = "foo"} : () -> ()
+
+// -----
+
+"test.symbol"() {sym_name = "foo_3", sym_visibility = "nested"} : () -> ()
+"test.symbol"() {sym_name = "foo_4", sym_visibility = "private"} : () -> ()
+"test.symbol"() {sym_name = "foo_5", sym_visibility = "public"} : () -> ()
+"test.symbol"() {sym_name = "foo_6"} : () -> ()
 
 // -----
 
@@ -325,4 +382,83 @@ func @succeededResultSizeAttr() {
   // CHECK: test.attr_sized_results
   %0:4 = "test.attr_sized_results"() {result_segment_sizes = dense<[0, 2, 1, 1]>: vector<4xi32>} : () -> (i32, i32, i32, i32)
   return
+}
+
+// -----
+
+func @failedHasDominanceScopeOutsideDominanceFreeScope() -> () {
+  "test.ssacfg_region"() ({
+    test.graph_region {
+      // expected-error @+1 {{operand #0 does not dominate this use}}
+      %2:3 = "bar"(%1) : (i64) -> (i1,i1,i1)
+    }
+    // expected-note @+1 {{operand defined here}}
+    %1 = "baz"() : () -> (i64)
+  }) : () -> ()
+  return
+}
+
+// -----
+
+// Ensure that SSACFG regions of operations in GRAPH regions are
+// checked for dominance
+func @illegalInsideDominanceFreeScope() -> () {
+  test.graph_region {
+    func @test() -> i1 {
+    ^bb1:
+      // expected-error @+1 {{operand #0 does not dominate this use}}
+      %2:3 = "bar"(%1) : (i64) -> (i1,i1,i1)
+      // expected-note @+1 {{operand defined here}}
+	   %1 = "baz"(%2#0) : (i1) -> (i64)
+      return %2#1 : i1
+    }
+    "terminator"() : () -> ()
+  }
+  return
+}
+
+// -----
+
+// Ensure that SSACFG regions of operations in GRAPH regions are
+// checked for dominance
+func @illegalCDFGInsideDominanceFreeScope() -> () {
+  test.graph_region {
+    func @test() -> i1 {
+    ^bb1:
+      // expected-error @+1 {{operand #0 does not dominate this use}}
+      %2:3 = "bar"(%1) : (i64) -> (i1,i1,i1)
+      br ^bb4
+    ^bb2:
+      br ^bb2
+    ^bb4:
+      %1 = "foo"() : ()->i64   // expected-note {{operand defined here}}
+		return %2#1 : i1
+    }
+     "terminator"() : () -> ()
+  }
+  return
+}
+
+// -----
+
+// Ensure that GRAPH regions still have all values defined somewhere.
+func @illegalCDFGInsideDominanceFreeScope() -> () {
+  test.graph_region {
+    // expected-error @+1 {{use of undeclared SSA value name}}
+    %2:3 = "bar"(%1) : (i64) -> (i1,i1,i1)
+    "terminator"() : () -> ()
+  }
+  return
+}
+
+// -----
+
+func @graph_region_cant_have_blocks() {
+  test.graph_region {
+    // expected-error@-1 {{'test.graph_region' op expects graph region #0 to have 0 or 1 blocks}}
+  ^bb42:
+    br ^bb43
+  ^bb43:
+    "terminator"() : () -> ()
+  }
 }

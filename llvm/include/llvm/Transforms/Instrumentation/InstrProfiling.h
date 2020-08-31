@@ -68,6 +68,8 @@ private:
   // vector of counter load/store pairs to be register promoted.
   std::vector<LoadStorePair> PromotionCandidates;
 
+  // FIXME: These are to be removed after switching to the new memop value
+  // profiling.
   // The start value of precise value profile range for memory intrinsic sizes.
   int64_t MemOPSizeRangeStart;
   // The end value of precise value profile range for memory intrinsic sizes.
@@ -81,6 +83,9 @@ private:
 
   /// Register-promote counter loads and stores in loops.
   void promoteCounterLoadStores(Function *F);
+
+  /// Returns true if relocating counters at runtime is enabled.
+  bool isRuntimeCounterRelocationEnabled() const;
 
   /// Returns true if profile counter update register promotion is enabled.
   bool isCounterPromotionEnabled() const;

@@ -1,4 +1,4 @@
-//===---------------------StructuredData.cpp ---------------------*- C++-*-===//
+//===-- StructuredData.cpp ------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -21,7 +21,8 @@ static StructuredData::ObjectSP ParseJSONValue(json::Value &value);
 static StructuredData::ObjectSP ParseJSONObject(json::Object *object);
 static StructuredData::ObjectSP ParseJSONArray(json::Array *array);
 
-StructuredData::ObjectSP StructuredData::ParseJSON(std::string json_text) {
+StructuredData::ObjectSP
+StructuredData::ParseJSON(const std::string &json_text) {
   llvm::Expected<json::Value> value = json::parse(json_text);
   if (!value) {
     llvm::consumeError(value.takeError());
@@ -78,7 +79,7 @@ static StructuredData::ObjectSP ParseJSONObject(json::Object *object) {
     if (StructuredData::ObjectSP value_sp = ParseJSONValue(value))
       dict_up->AddItem(key, value_sp);
   }
-  return dict_up;
+  return std::move(dict_up);
 }
 
 static StructuredData::ObjectSP ParseJSONArray(json::Array *array) {
@@ -87,7 +88,7 @@ static StructuredData::ObjectSP ParseJSONArray(json::Array *array) {
     if (StructuredData::ObjectSP value_sp = ParseJSONValue(value))
       array_up->AddItem(value_sp);
   }
-  return array_up;
+  return std::move(array_up);
 }
 
 StructuredData::ObjectSP
@@ -156,7 +157,7 @@ void StructuredData::String::Serialize(json::OStream &s) const {
 void StructuredData::Dictionary::Serialize(json::OStream &s) const {
   s.objectBegin();
   for (const auto &pair : m_dict) {
-    s.attributeBegin(pair.first.AsCString());
+    s.attributeBegin(pair.first.GetStringRef());
     pair.second->Serialize(s);
     s.attributeEnd();
   }

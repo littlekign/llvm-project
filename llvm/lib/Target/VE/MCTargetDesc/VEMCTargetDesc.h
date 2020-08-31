@@ -18,10 +18,40 @@
 #include <memory>
 
 namespace llvm {
-
+class MCAsmBackend;
+class MCCodeEmitter;
+class MCContext;
+class MCInstrInfo;
+class MCObjectTargetWriter;
+class MCRegisterInfo;
+class MCSubtargetInfo;
+class MCTargetOptions;
 class Target;
-Target &getTheVETarget();
+class Triple;
+class StringRef;
+class raw_pwrite_stream;
+class raw_ostream;
 
-} // end llvm namespace
+MCCodeEmitter *createVEMCCodeEmitter(const MCInstrInfo &MCII,
+                                     const MCRegisterInfo &MRI, MCContext &Ctx);
+MCAsmBackend *createVEAsmBackend(const Target &T, const MCSubtargetInfo &STI,
+                                 const MCRegisterInfo &MRI,
+                                 const MCTargetOptions &Options);
+std::unique_ptr<MCObjectTargetWriter> createVEELFObjectWriter(uint8_t OSABI);
+} // namespace llvm
+
+// Defines symbolic names for VE registers.  This defines a mapping from
+// register name to register number.
+//
+#define GET_REGINFO_ENUM
+#include "VEGenRegisterInfo.inc"
+
+// Defines symbolic names for the VE instructions.
+//
+#define GET_INSTRINFO_ENUM
+#include "VEGenInstrInfo.inc"
+
+#define GET_SUBTARGETINFO_ENUM
+#include "VEGenSubtargetInfo.inc"
 
 #endif

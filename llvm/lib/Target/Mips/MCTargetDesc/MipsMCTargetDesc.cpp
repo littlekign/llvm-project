@@ -77,7 +77,7 @@ static MCRegisterInfo *createMipsMCRegisterInfo(const Triple &TT) {
 static MCSubtargetInfo *createMipsMCSubtargetInfo(const Triple &TT,
                                                   StringRef CPU, StringRef FS) {
   CPU = MIPS_MC::selectMipsCPU(TT, CPU);
-  return createMipsMCSubtargetInfoImpl(TT, CPU, FS);
+  return createMipsMCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
 }
 
 static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,
@@ -166,7 +166,7 @@ static MCInstrAnalysis *createMipsMCInstrAnalysis(const MCInstrInfo *Info) {
   return new MipsMCInstrAnalysis(Info);
 }
 
-extern "C" void LLVMInitializeMipsTargetMC() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMipsTargetMC() {
   for (Target *T : {&getTheMipsTarget(), &getTheMipselTarget(),
                     &getTheMips64Target(), &getTheMips64elTarget()}) {
     // Register the MC asm info.

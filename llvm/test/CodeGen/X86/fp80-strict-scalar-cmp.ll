@@ -8,6 +8,7 @@ define i32 @test_oeq_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -28,10 +29,11 @@ define i32 @test_oeq_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnel %esi, %eax
 ; X87-64-NEXT:    cmovpl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"oeq",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -44,6 +46,7 @@ define i32 @test_ogt_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -64,9 +67,10 @@ define i32 @test_ogt_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ogt",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -79,6 +83,7 @@ define i32 @test_oge_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -99,9 +104,10 @@ define i32 @test_oge_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"oge",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -114,6 +120,7 @@ define i32 @test_olt_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -134,9 +141,10 @@ define i32 @test_olt_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"olt",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -149,6 +157,7 @@ define i32 @test_ole_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -169,9 +178,10 @@ define i32 @test_ole_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ole",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -184,6 +194,7 @@ define i32 @test_one_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -204,9 +215,10 @@ define i32 @test_one_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"one",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -219,6 +231,7 @@ define i32 @test_ord_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -239,9 +252,10 @@ define i32 @test_ord_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovpl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ord",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -254,6 +268,7 @@ define i32 @test_ueq_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -274,9 +289,10 @@ define i32 @test_ueq_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ueq",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -289,6 +305,7 @@ define i32 @test_ugt_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -309,9 +326,10 @@ define i32 @test_ugt_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovael %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ugt",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -324,6 +342,7 @@ define i32 @test_uge_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -344,9 +363,10 @@ define i32 @test_uge_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmoval %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"uge",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -359,6 +379,7 @@ define i32 @test_ult_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -379,9 +400,10 @@ define i32 @test_ult_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovael %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ult",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -394,6 +416,7 @@ define i32 @test_ule_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -414,9 +437,10 @@ define i32 @test_ule_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmoval %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ule",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -429,6 +453,7 @@ define i32 @test_une_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -449,10 +474,11 @@ define i32 @test_une_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnel %edi, %eax
 ; X87-64-NEXT:    cmovpl %edi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"une",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -465,6 +491,7 @@ define i32 @test_uno_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fucompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -485,9 +512,10 @@ define i32 @test_uno_q(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fucompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnpl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmp.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmp.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"uno",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -500,6 +528,7 @@ define i32 @test_oeq_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -520,10 +549,11 @@ define i32 @test_oeq_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnel %esi, %eax
 ; X87-64-NEXT:    cmovpl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"oeq",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -536,6 +566,7 @@ define i32 @test_ogt_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -556,9 +587,10 @@ define i32 @test_ogt_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ogt",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -571,6 +603,7 @@ define i32 @test_oge_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -591,9 +624,10 @@ define i32 @test_oge_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"oge",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -606,6 +640,7 @@ define i32 @test_olt_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -626,9 +661,10 @@ define i32 @test_olt_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"olt",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -641,6 +677,7 @@ define i32 @test_ole_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -661,9 +698,10 @@ define i32 @test_ole_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovbl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ole",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -676,6 +714,7 @@ define i32 @test_one_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -696,9 +735,10 @@ define i32 @test_one_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"one",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -711,6 +751,7 @@ define i32 @test_ord_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -731,9 +772,10 @@ define i32 @test_ord_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovpl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ord",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -746,6 +788,7 @@ define i32 @test_ueq_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -766,9 +809,10 @@ define i32 @test_ueq_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnel %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ueq",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -781,6 +825,7 @@ define i32 @test_ugt_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -801,9 +846,10 @@ define i32 @test_ugt_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovael %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ugt",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -816,6 +862,7 @@ define i32 @test_uge_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -836,9 +883,10 @@ define i32 @test_uge_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmoval %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"uge",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -851,6 +899,7 @@ define i32 @test_ult_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -871,9 +920,10 @@ define i32 @test_ult_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovael %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ult",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -886,6 +936,7 @@ define i32 @test_ule_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -906,9 +957,10 @@ define i32 @test_ule_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmoval %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"ule",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -921,6 +973,7 @@ define i32 @test_une_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -941,10 +994,11 @@ define i32 @test_une_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnel %edi, %eax
 ; X87-64-NEXT:    cmovpl %edi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"une",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -957,6 +1011,7 @@ define i32 @test_uno_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X87-32-NEXT:    fcompp
+; X87-32-NEXT:    wait
 ; X87-32-NEXT:    fnstsw %ax
 ; X87-32-NEXT:    # kill: def $ah killed $ah killed $ax
 ; X87-32-NEXT:    sahf
@@ -977,9 +1032,10 @@ define i32 @test_uno_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 ; X87-64-NEXT:    fldt {{[0-9]+}}(%rsp)
 ; X87-64-NEXT:    fcompi %st(1), %st
 ; X87-64-NEXT:    fstp %st(0)
+; X87-64-NEXT:    wait
 ; X87-64-NEXT:    cmovnpl %esi, %eax
 ; X87-64-NEXT:    retq
-  %cond = call i1 @llvm.experimental.constrained.fcmps.x86_fp80(
+  %cond = call i1 @llvm.experimental.constrained.fcmps.f80(
                                                x86_fp80 %f1, x86_fp80 %f2, metadata !"uno",
                                                metadata !"fpexcept.strict") #0
   %res = select i1 %cond, i32 %a, i32 %b
@@ -988,5 +1044,5 @@ define i32 @test_uno_s(i32 %a, i32 %b, x86_fp80 %f1, x86_fp80 %f2) #0 {
 
 attributes #0 = { strictfp }
 
-declare i1 @llvm.experimental.constrained.fcmp.x86_fp80(x86_fp80, x86_fp80, metadata, metadata)
-declare i1 @llvm.experimental.constrained.fcmps.x86_fp80(x86_fp80, x86_fp80, metadata, metadata)
+declare i1 @llvm.experimental.constrained.fcmp.f80(x86_fp80, x86_fp80, metadata, metadata)
+declare i1 @llvm.experimental.constrained.fcmps.f80(x86_fp80, x86_fp80, metadata, metadata)
