@@ -6194,7 +6194,8 @@ considered having this property if at least one of the access groups
 matches the ``llvm.loop.parallel_accesses`` list.
 
 If all memory-accessing instructions in a loop have
-``llvm.loop.parallel_accesses`` metadata that refers to that loop, then the
+``llvm.access.group`` metadata that each refer to one of the access
+groups of a loop's ``llvm.loop.parallel_accesses`` metadata, then the
 loop has no loop carried memory dependences and is considered to be a
 parallel loop.
 
@@ -6884,7 +6885,7 @@ where the first ``param`` is the number of the parameter it describes,
 which can be accessed by the function. This range does not include accesses by
 function calls from ``calls`` list.
 
-where each ``Callee`` decribes how parameter is forwared into other
+where each ``Callee`` describes how parameter is forwarded into other
 functions and looks like:
 
 .. code-block:: text
@@ -15951,8 +15952,8 @@ Arguments:
 """"""""""
 
 The first argument ``%Ptr`` is a pointer type to the returned vector type, and
-correponds to the start address to load from. The second argument ``%Stride``
-is a postive, constant integer with ``%Stride >= <Rows>``. ``%Stride`` is used
+corresponds to the start address to load from. The second argument ``%Stride``
+is a positive, constant integer with ``%Stride >= <Rows>``. ``%Stride`` is used
 to compute the column memory addresses. I.e., for a column ``C``, its start
 memory addresses is calculated with ``%Ptr + C * %Stride``. The third Argument
 ``<IsVolatile>`` is a boolean value.  The fourth and fifth arguments,

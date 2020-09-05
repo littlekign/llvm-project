@@ -49,6 +49,13 @@ public:
     return { Min / RHS, Scalable };
   }
 
+  friend ElementCount operator-(const ElementCount &LHS,
+                                const ElementCount &RHS) {
+    assert(LHS.Scalable == RHS.Scalable &&
+           "Arithmetic using mixed scalable and fixed types");
+    return {LHS.Min - RHS.Min, LHS.Scalable};
+  }
+
   bool operator==(const ElementCount& RHS) const {
     return Min == RHS.Min && Scalable == RHS.Scalable;
   }
@@ -70,6 +77,10 @@ public:
 
   ElementCount NextPowerOf2() const {
     return {(unsigned)llvm::NextPowerOf2(Min), Scalable};
+  }
+
+  bool isKnownMultipleOf(unsigned RHS) const {
+    return Min % RHS == 0;
   }
 
   static ElementCount getFixed(unsigned Min) { return {Min, false}; }
@@ -104,6 +115,15 @@ public:
   ///@}
 
   unsigned getKnownMinValue() const { return Min; }
+
+  // Return the minimum value with the assumption that the count is exact.
+  // Use in places where a scalable count doesn't make sense (e.g. non-vector
+  // types, or vectors in backends which don't support scalable vectors).
+  unsigned getFixedValue() const {
+    assert(!Scalable &&
+           "Request for a fixed element count on a scalable object");
+    return Min;
+  }
 
   bool isScalable() const { return Scalable; }
 };
