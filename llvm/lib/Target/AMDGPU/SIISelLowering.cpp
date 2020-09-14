@@ -1417,8 +1417,10 @@ bool SITargetLowering::allowsMisalignedMemoryAccessesImpl(
     }
     if (Size == 96) {
       // ds_read/write_b96 require 16-byte alignment on gfx8 and older.
-      bool Aligned =
-          Alignment >= Align(Subtarget->hasUnalignedDSAccess() ? 4 : 16);
+      bool Aligned = Alignment >= Align((Subtarget->hasUnalignedDSAccess() &&
+                                         !Subtarget->hasLDSMisalignedBug())
+                                            ? 4
+                                            : 16);
       if (IsFast)
         *IsFast = Aligned;
 
@@ -1428,8 +1430,10 @@ bool SITargetLowering::allowsMisalignedMemoryAccessesImpl(
       // ds_read/write_b128 require 16-byte alignment on gfx8 and older, but we
       // can do a 8 byte aligned, 16 byte access in a single operation using
       // ds_read2/write2_b64.
-      bool Aligned =
-          Alignment >= Align(Subtarget->hasUnalignedDSAccess() ? 4 : 8);
+      bool Aligned = Alignment >= Align((Subtarget->hasUnalignedDSAccess() &&
+                                         !Subtarget->hasLDSMisalignedBug())
+                                            ? 4
+                                            : 8);
       if (IsFast)
         *IsFast = Aligned;
 
@@ -1661,9 +1665,9 @@ SDValue SITargetLowering::lowerKernargMemParameter(
     // TODO: If we passed in the base kernel offset we could have a better
     // alignment than 4, but we don't really need it.
     SDValue Ptr = lowerKernArgParameterPtr(DAG, SL, Chain, AlignDownOffset);
-    SDValue Load = DAG.getLoad(MVT::i32, SL, Chain, Ptr, PtrInfo, 4,
+    SDValue Load = DAG.getLoad(MVT::i32, SL, Chain, Ptr, PtrInfo, Align(4),
                                MachineMemOperand::MODereferenceable |
-                               MachineMemOperand::MOInvariant);
+                                   MachineMemOperand::MOInvariant);
 
     SDValue ShiftAmt = DAG.getConstant(OffsetDiff * 8, SL, MVT::i32);
     SDValue Extract = DAG.getNode(ISD::SRL, SL, MVT::i32, Load, ShiftAmt);
@@ -3070,8 +3074,8 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
 
         MemOpChains.push_back(Cpy);
       } else {
-        SDValue Store = DAG.getStore(Chain, DL, Arg, DstAddr, DstInfo,
-                                     Alignment ? Alignment->value() : 0);
+        SDValue Store =
+            DAG.getStore(Chain, DL, Arg, DstAddr, DstInfo, Alignment);
         MemOpChains.push_back(Store);
       }
     }
@@ -4259,21 +4263,16 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
 
     // The dedicated instructions can only set the whole denorm or round mode at
     // once, not a subset of bits in either.
-    if (Width == 8 && (SetMask & (AMDGPU::Hwreg::FP_ROUND_MASK |
-                                  AMDGPU::Hwreg::FP_DENORM_MASK)) == SetMask) {
+    if (SetMask ==
+        (AMDGPU::Hwreg::FP_ROUND_MASK | AMDGPU::Hwreg::FP_DENORM_MASK)) {
       // If this fully sets both the round and denorm mode, emit the two
       // dedicated instructions for these.
-      assert(Offset == 0);
       SetRoundOp = AMDGPU::S_ROUND_MODE;
       SetDenormOp = AMDGPU::S_DENORM_MODE;
-    } else if (Width == 4) {
-      if ((SetMask & AMDGPU::Hwreg::FP_ROUND_MASK) == SetMask) {
-        SetRoundOp = AMDGPU::S_ROUND_MODE;
-        assert(Offset == 0);
-      } else if ((SetMask & AMDGPU::Hwreg::FP_DENORM_MASK) == SetMask) {
-        SetDenormOp = AMDGPU::S_DENORM_MODE;
-        assert(Offset == 4);
-      }
+    } else if (SetMask == AMDGPU::Hwreg::FP_ROUND_MASK) {
+      SetRoundOp = AMDGPU::S_ROUND_MODE;
+    } else if (SetMask == AMDGPU::Hwreg::FP_DENORM_MASK) {
+      SetDenormOp = AMDGPU::S_DENORM_MODE;
     }
 
     if (SetRoundOp || SetDenormOp) {
@@ -5232,7 +5231,7 @@ SDValue SITargetLowering::getSegmentAperture(unsigned AS, const SDLoc &DL,
   // be available and how do we get it?
   MachinePointerInfo PtrInfo(AMDGPUAS::CONSTANT_ADDRESS);
   return DAG.getLoad(MVT::i32, DL, QueuePtr.getValue(1), Ptr, PtrInfo,
-                     MinAlign(64, StructOffset),
+                     commonAlignment(Align(64), StructOffset),
                      MachineMemOperand::MODereferenceable |
                          MachineMemOperand::MOInvariant);
 }

@@ -964,8 +964,10 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
       }
     }
 
-    for (auto VT : {MVT::nxv8i8, MVT::nxv4i16, MVT::nxv2i32})
+    for (auto VT : {MVT::nxv8i8, MVT::nxv4i16, MVT::nxv2i32}) {
       setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Custom);
+      setOperationAction(ISD::INSERT_SUBVECTOR, VT, Custom);
+    }
 
     setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i8, Custom);
     setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i16, Custom);
@@ -5271,7 +5273,7 @@ AArch64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
   SDValue FuncTLVGet = DAG.getLoad(
       PtrMemVT, DL, Chain, DescAddr,
       MachinePointerInfo::getGOT(DAG.getMachineFunction()),
-      /* Alignment = */ PtrMemVT.getSizeInBits() / 8,
+      Align(PtrMemVT.getSizeInBits() / 8),
       MachineMemOperand::MOInvariant | MachineMemOperand::MODereferenceable);
   Chain = FuncTLVGet.getValue(1);
 
@@ -6300,8 +6302,8 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
 
   // void *__stack at offset 0
   SDValue Stack = DAG.getFrameIndex(FuncInfo->getVarArgsStackIndex(), PtrVT);
-  MemOps.push_back(DAG.getStore(Chain, DL, Stack, VAList,
-                                MachinePointerInfo(SV), /* Alignment = */ 8));
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, Stack, VAList, MachinePointerInfo(SV), Align(8)));
 
   // void *__gr_top at offset 8
   int GPRSize = FuncInfo->getVarArgsGPRSize();
@@ -6316,8 +6318,7 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
                         DAG.getConstant(GPRSize, DL, PtrVT));
 
     MemOps.push_back(DAG.getStore(Chain, DL, GRTop, GRTopAddr,
-                                  MachinePointerInfo(SV, 8),
-                                  /* Alignment = */ 8));
+                                  MachinePointerInfo(SV, 8), Align(8)));
   }
 
   // void *__vr_top at offset 16
@@ -6332,23 +6333,22 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
                         DAG.getConstant(FPRSize, DL, PtrVT));
 
     MemOps.push_back(DAG.getStore(Chain, DL, VRTop, VRTopAddr,
-                                  MachinePointerInfo(SV, 16),
-                                  /* Alignment = */ 8));
+                                  MachinePointerInfo(SV, 16), Align(8)));
   }
 
   // int __gr_offs at offset 24
   SDValue GROffsAddr =
       DAG.getNode(ISD::ADD, DL, PtrVT, VAList, DAG.getConstant(24, DL, PtrVT));
-  MemOps.push_back(DAG.getStore(
-      Chain, DL, DAG.getConstant(-GPRSize, DL, MVT::i32), GROffsAddr,
-      MachinePointerInfo(SV, 24), /* Alignment = */ 4));
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, DAG.getConstant(-GPRSize, DL, MVT::i32),
+                   GROffsAddr, MachinePointerInfo(SV, 24), Align(4)));
 
   // int __vr_offs at offset 28
   SDValue VROffsAddr =
       DAG.getNode(ISD::ADD, DL, PtrVT, VAList, DAG.getConstant(28, DL, PtrVT));
-  MemOps.push_back(DAG.getStore(
-      Chain, DL, DAG.getConstant(-FPRSize, DL, MVT::i32), VROffsAddr,
-      MachinePointerInfo(SV, 28), /* Alignment = */ 4));
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, DAG.getConstant(-FPRSize, DL, MVT::i32),
+                   VROffsAddr, MachinePointerInfo(SV, 28), Align(4)));
 
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
@@ -9099,9 +9099,34 @@ SDValue AArch64TargetLowering::LowerINSERT_SUBVECTOR(SDValue Op,
   EVT InVT = Op.getOperand(1).getValueType();
   unsigned Idx = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
 
-  // We don't have any patterns for scalable vector yet.
-  if (InVT.isScalableVector())
+  if (InVT.isScalableVector()) {
+    SDLoc DL(Op);
+    EVT VT = Op.getValueType();
+
+    if (!isTypeLegal(VT) || !VT.isInteger())
+      return SDValue();
+
+    SDValue Vec0 = Op.getOperand(0);
+    SDValue Vec1 = Op.getOperand(1);
+
+    // Ensure the subvector is half the size of the main vector.
+    if (VT.getVectorElementCount() != (InVT.getVectorElementCount() * 2))
+      return SDValue();
+
+    // Extend elements of smaller vector...
+    EVT WideVT = InVT.widenIntegerVectorElementType(*(DAG.getContext()));
+    SDValue ExtVec = DAG.getNode(ISD::ANY_EXTEND, DL, WideVT, Vec1);
+
+    if (Idx == 0) {
+      SDValue HiVec0 = DAG.getNode(AArch64ISD::UUNPKHI, DL, WideVT, Vec0);
+      return DAG.getNode(AArch64ISD::UZP1, DL, VT, ExtVec, HiVec0);
+    } else if (Idx == InVT.getVectorMinNumElements()) {
+      SDValue LoVec0 = DAG.getNode(AArch64ISD::UUNPKLO, DL, WideVT, Vec0);
+      return DAG.getNode(AArch64ISD::UZP1, DL, VT, LoVec0, ExtVec);
+    }
+
     return SDValue();
+  }
 
   // This will be matched by custom code during ISelDAGToDAG.
   if (Idx == 0 && isPackedVectorType(InVT, DAG) && Op.getOperand(0).isUndef())
@@ -9502,14 +9527,12 @@ SDValue AArch64TargetLowering::LowerVECREDUCE(SDValue Op,
   case ISD::VECREDUCE_UMIN:
     return getReductionSDNode(AArch64ISD::UMINV, dl, Op, DAG);
   case ISD::VECREDUCE_FMAX: {
-    assert(Op->getFlags().hasNoNaNs() && "fmax vector reduction needs NoNaN flag");
     return DAG.getNode(
         ISD::INTRINSIC_WO_CHAIN, dl, Op.getValueType(),
         DAG.getConstant(Intrinsic::aarch64_neon_fmaxnmv, dl, MVT::i32),
         Op.getOperand(0));
   }
   case ISD::VECREDUCE_FMIN: {
-    assert(Op->getFlags().hasNoNaNs() && "fmin vector reduction needs NoNaN flag");
     return DAG.getNode(
         ISD::INTRINSIC_WO_CHAIN, dl, Op.getValueType(),
         DAG.getConstant(Intrinsic::aarch64_neon_fminnmv, dl, MVT::i32),
@@ -13001,6 +13024,31 @@ static SDValue splitStores(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
                       S->getMemOperand()->getFlags());
 }
 
+static SDValue performUzpCombine(SDNode *N, SelectionDAG &DAG) {
+  SDLoc DL(N);
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+  EVT ResVT = N->getValueType(0);
+
+  // uzp1(unpklo(uzp1(x, y)), z) => uzp1(x, z)
+  if (Op0.getOpcode() == AArch64ISD::UUNPKLO) {
+    if (Op0.getOperand(0).getOpcode() == AArch64ISD::UZP1) {
+      SDValue X = Op0.getOperand(0).getOperand(0);
+      return DAG.getNode(AArch64ISD::UZP1, DL, ResVT, X, Op1);
+    }
+  }
+
+  // uzp1(x, unpkhi(uzp1(y, z))) => uzp1(x, z)
+  if (Op1.getOpcode() == AArch64ISD::UUNPKHI) {
+    if (Op1.getOperand(0).getOpcode() == AArch64ISD::UZP1) {
+      SDValue Z = Op1.getOperand(0).getOperand(1);
+      return DAG.getNode(AArch64ISD::UZP1, DL, ResVT, Op0, Z);
+    }
+  }
+
+  return SDValue();
+}
+
 /// Target-specific DAG combine function for post-increment LD1 (lane) and
 /// post-increment LD1R.
 static SDValue performPostLD1Combine(SDNode *N,
@@ -14342,6 +14390,8 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return performPostLD1Combine(N, DCI, false);
   case AArch64ISD::NVCAST:
     return performNVCASTCombine(N);
+  case AArch64ISD::UZP1:
+    return performUzpCombine(N, DAG);
   case ISD::INSERT_VECTOR_ELT:
     return performPostLD1Combine(N, DCI, true);
   case ISD::INTRINSIC_VOID:
