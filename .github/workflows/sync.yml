@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: TG908/fork-sync@v1.2
+    - uses: TG908/fork-sync@beta
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         owner: llvm
