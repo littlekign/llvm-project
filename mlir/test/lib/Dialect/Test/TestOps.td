@@ -168,6 +168,9 @@ def PositiveIntAttrOp : TEST_Op<"positive_int_attr"> {
 def TypeArrayAttrOp : TEST_Op<"type_array_attr"> {
   let arguments = (ins TypeArrayAttr:$attr);
 }
+def TypeArrayAttrWithDefaultOp : TEST_Op<"type_array_attr_with_default"> {
+  let arguments = (ins DefaultValuedAttr<TypeArrayAttr, "{}">:$attr);
+}
 def TypeStringAttrWithTypeOp : TEST_Op<"string_attr_with_type"> {
   let arguments = (ins TypedStrAttr<AnyType>:$attr);
   let assemblyFormat = "$attr attr-dict";
@@ -1059,14 +1062,14 @@ def MixedVResultOp3 : TEST_Op<"mixed_variadic_out3",
   // result type. So need to provide a builder not requiring result types.
   let builders = [
     OpBuilder<
-      "OpBuilder &builder, OperationState &state, IntegerAttr count",
+      "IntegerAttr count",
       [{
-        auto i32Type = builder.getIntegerType(32);
-        state.addTypes(i32Type); // $output1
+        auto i32Type = $_builder.getIntegerType(32);
+        $_state.addTypes(i32Type); // $output1
         SmallVector<Type, 4> types(count.getInt(), i32Type);
-        state.addTypes(types); // $output2
-        state.addTypes(types); // $output3
-        state.addAttribute("count", count);
+        $_state.addTypes(types); // $output2
+        $_state.addTypes(types); // $output3
+        $_state.addAttribute("count", count);
       }]>
   ];
 }
