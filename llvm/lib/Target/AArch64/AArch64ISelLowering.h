@@ -99,6 +99,7 @@ enum NodeType : unsigned {
   FFLOOR_MERGE_PASSTHRU,
   FNEARBYINT_MERGE_PASSTHRU,
   FNEG_MERGE_PASSTHRU,
+  FRECPX_MERGE_PASSTHRU,
   FRINT_MERGE_PASSTHRU,
   FROUND_MERGE_PASSTHRU,
   FROUNDEVEN_MERGE_PASSTHRU,
@@ -927,6 +928,8 @@ private:
   SDValue LowerFixedLengthVectorIntExtendToSVE(SDValue Op,
                                                SelectionDAG &DAG) const;
   SDValue LowerFixedLengthVectorLoadToSVE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFixedLengthReductionToSVE(unsigned Opcode, SDValue ScalarOp,
+                                         SelectionDAG &DAG) const;
   SDValue LowerFixedLengthVectorSelectToSVE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFixedLengthVectorSetccToSVE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFixedLengthVectorStoreToSVE(SDValue Op, SelectionDAG &DAG) const;
