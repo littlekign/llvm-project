@@ -19,6 +19,7 @@ config.shared_libs = @LLVM_ENABLE_SHARED_LIBS@
 config.llvm_use_sanitizer = "@LLVM_USE_SANITIZER@"
 config.target_triple = "@TARGET_TRIPLE@"
 config.lldb_build_directory = "@LLDB_TEST_BUILD_DIRECTORY@"
+config.lldb_trace_directory = "@LLDB_TEST_TRACE_DIRECTORY@"
 config.lldb_reproducer_directory = os.path.join("@LLDB_TEST_BUILD_DIRECTORY@", "reproducers")
 config.python_executable = "@Python3_EXECUTABLE@"
 config.dotest_args_str = "@LLDB_DOTEST_ARGS@"
@@ -68,4 +69,4 @@ except KeyError as e:
     lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
 
 # Let the main config do the real work.
-lit_config.load_config(config, "@LLDB_SOURCE_DIR@/test/API/lit.cfg.py")
+lit_config.load_config(config, os.path.join(config.lldb_src_root, "test", "API", "lit.cfg.py"))
