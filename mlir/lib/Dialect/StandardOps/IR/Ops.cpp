@@ -758,7 +758,9 @@ static LogicalResult verify(CallOp op) {
 
   for (unsigned i = 0, e = fnType.getNumInputs(); i != e; ++i)
     if (op.getOperand(i).getType() != fnType.getInput(i))
-      return op.emitOpError("operand type mismatch");
+      return op.emitOpError("operand type mismatch: expected operand type ")
+             << fnType.getInput(i) << ", but provided "
+             << op.getOperand(i).getType() << " for operand number " << i;
 
   if (fnType.getNumResults() != op.getNumResults())
     return op.emitOpError("incorrect number of results for callee");
@@ -2644,7 +2646,7 @@ static void printOpWithOffsetsSizesAndStrides(
     OpAsmPrinter &p, OpType op,
     llvm::function_ref<void(OpAsmPrinter &p, OpType op)> printExtraOperands =
         [](OpAsmPrinter &p, OpType op) {},
-    StringLiteral resultTypeKeyword = "to") {
+    StringRef resultTypeKeyword = "to") {
   int stdDotLen = StandardOpsDialect::getDialectNamespace().size() + 1;
   p << op.getOperation()->getName().getStringRef().drop_front(stdDotLen) << ' ';
   p << op.source();
@@ -2677,7 +2679,7 @@ static ParseResult parseOpWithOffsetsSizesAndStrides(
     std::function<ParseResult(OpAsmParser &p,
                               OpAsmParser::OperandType &dstInfo)>
         parseExtraOperand = nullptr,
-    StringLiteral resultTypeKeyword = "to") {
+    StringRef resultTypeKeyword = "to") {
   OpAsmParser::OperandType srcInfo, dstInfo;
   SmallVector<OpAsmParser::OperandType, 4> offsetsInfo, sizesInfo, stridesInfo;
   auto indexType = parser.getBuilder().getIndexType();
