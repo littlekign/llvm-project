@@ -3,7 +3,7 @@
 
 # RUN: llvm-mc -filetype=obj -triple=powerpc64le %t/asm -o %t.o
 # RUN: llvm-mc -filetype=obj -triple=powerpc64le %t/defs -o %t-defs.o
-# RUN: ld.lld --shared %t-defs.o -o %t-defs.so
+# RUN: ld.lld --shared %t-defs.o --soname=t-defs -o %t-defs.so
 # RUN: ld.lld -T %t/lds --shared %t.o -o %t-gd.so
 # RUN: ld.lld -T %t/lds %t.o %t-defs.so -o %t-gdtoie
 # RUN: ld.lld -T %t/lds %t.o %t-defs.o -o %t-gdtole
@@ -52,7 +52,7 @@ y:
 # GD-SYM:   3: 0000000000000000     0 TLS     GLOBAL DEFAULT   UND y
 
 
-# GDTOIE-RELOC: Relocation section '.rela.dyn' at offset 0x10118 contains 2 entries:
+# GDTOIE-RELOC: Relocation section '.rela.dyn' at offset 0x{{.*}} contains 2 entries:
 # GDTOIE-RELOC: 00000000010010e0  0000000200000049 R_PPC64_TPREL64        0000000000000000 x + 0
 # GDTOIE-RELOC: 00000000010010e8  0000000300000049 R_PPC64_TPREL64        0000000000000000 y + 0
 
