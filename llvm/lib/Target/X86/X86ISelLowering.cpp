@@ -5022,13 +5022,47 @@ bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
                                            const CallInst &I,
                                            MachineFunction &MF,
                                            unsigned Intrinsic) const {
-
-  const IntrinsicData* IntrData = getIntrinsicWithChain(Intrinsic);
-  if (!IntrData)
-    return false;
-
   Info.flags = MachineMemOperand::MONone;
   Info.offset = 0;
+
+  const IntrinsicData* IntrData = getIntrinsicWithChain(Intrinsic);
+  if (!IntrData) {
+    switch (Intrinsic) {
+    case Intrinsic::x86_aesenc128kl:
+    case Intrinsic::x86_aesdec128kl:
+      Info.opc = ISD::INTRINSIC_W_CHAIN;
+      Info.ptrVal = I.getArgOperand(1);
+      Info.memVT = EVT::getIntegerVT(I.getType()->getContext(), 48);
+      Info.align = Align(1);
+      Info.flags |= MachineMemOperand::MOLoad;
+      return true;
+    case Intrinsic::x86_aesenc256kl:
+    case Intrinsic::x86_aesdec256kl:
+      Info.opc = ISD::INTRINSIC_W_CHAIN;
+      Info.ptrVal = I.getArgOperand(1);
+      Info.memVT = EVT::getIntegerVT(I.getType()->getContext(), 64);
+      Info.align = Align(1);
+      Info.flags |= MachineMemOperand::MOLoad;
+      return true;
+    case Intrinsic::x86_aesencwide128kl:
+    case Intrinsic::x86_aesdecwide128kl:
+      Info.opc = ISD::INTRINSIC_W_CHAIN;
+      Info.ptrVal = I.getArgOperand(0);
+      Info.memVT = EVT::getIntegerVT(I.getType()->getContext(), 48);
+      Info.align = Align(1);
+      Info.flags |= MachineMemOperand::MOLoad;
+      return true;
+    case Intrinsic::x86_aesencwide256kl:
+    case Intrinsic::x86_aesdecwide256kl:
+      Info.opc = ISD::INTRINSIC_W_CHAIN;
+      Info.ptrVal = I.getArgOperand(0);
+      Info.memVT = EVT::getIntegerVT(I.getType()->getContext(), 64);
+      Info.align = Align(1);
+      Info.flags |= MachineMemOperand::MOLoad;
+      return true;
+    }
+    return false;
+  }
 
   switch (IntrData->Type) {
   case TRUNCATE_TO_MEM_VI8:
@@ -25952,81 +25986,6 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
       return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), SetCC,
                          Operation.getValue(1));
     }
-    case Intrinsic::x86_mwaitx: {
-      // If the current function needs the base pointer, RBX,
-      // we shouldn't use mwaitx directly.
-      // Indeed the lowering of that instruction will clobber
-      // that register and since RBX will be a reserved register
-      // the register allocator will not make sure its value will
-      // be properly saved and restored around this live-range.
-      SDLoc dl(Op);
-      unsigned Opcode = X86ISD::MWAITX_DAG;
-      SDValue Chain = DAG.getNode(Opcode, dl, MVT::Other,
-                                  {Op->getOperand(0), Op->getOperand(2),
-                                   Op->getOperand(3), Op->getOperand(4)});
-      return Chain;
-    }
-    case Intrinsic::x86_encodekey128:
-    case Intrinsic::x86_encodekey256: {
-      SDLoc DL(Op);
-      SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other, MVT::Glue);
-      SDValue Chain = Op.getOperand(0);
-      bool IsEK256 = false;
-      Chain = DAG.getCopyToReg(Chain, DL, X86::XMM0, Op->getOperand(3),
-                               SDValue());
-
-      unsigned Opcode;
-
-      switch (IntNo) {
-      default: llvm_unreachable("Impossible intrinsic");
-      case Intrinsic::x86_encodekey128:
-        Opcode = X86::ENCODEKEY128;
-        break;
-      case Intrinsic::x86_encodekey256:
-        Opcode = X86::ENCODEKEY256;
-        Chain = DAG.getCopyToReg(Chain, DL, X86::XMM1, Op->getOperand(4),
-                                 Chain.getValue(1));
-        IsEK256 = true;
-        break;
-      }
-
-      SDNode *Res = DAG.getMachineNode(Opcode, DL, VTs,
-                                       {Op.getOperand(2), Chain,
-                                        Chain.getValue(1)});
-
-      Chain = SDValue(Res, 1);
-
-      SDValue XMM0 = DAG.getCopyFromReg(Chain, DL, X86::XMM0, MVT::v16i8,
-                                        SDValue(Res, 2));
-      SDValue XMM1 = DAG.getCopyFromReg(XMM0.getValue(1), DL, X86::XMM1,
-                                        MVT::v16i8, XMM0.getValue(2));
-      SDValue XMM2 = DAG.getCopyFromReg(XMM1.getValue(1), DL, X86::XMM2,
-                                        MVT::v16i8, XMM1.getValue(2));
-      SDValue XMM3, XMM4;
-      if (IsEK256) {
-        XMM3 = DAG.getCopyFromReg(XMM2.getValue(1), DL, X86::XMM3,
-                                  MVT::v16i8, XMM2.getValue(2));
-        XMM4 = DAG.getCopyFromReg(XMM3.getValue(1), DL, X86::XMM4,
-                                  MVT::v16i8, XMM3.getValue(2));
-      } else {
-        XMM4 = DAG.getCopyFromReg(XMM2.getValue(1), DL, X86::XMM4,
-                                  MVT::v16i8, XMM2.getValue(2));
-      }
-      SDValue XMM5 = DAG.getCopyFromReg(XMM4.getValue(1), DL, X86::XMM5,
-                                        MVT::v16i8, XMM4.getValue(2));
-      SDValue XMM6 = DAG.getCopyFromReg(XMM5.getValue(1), DL, X86::XMM6,
-                                        MVT::v16i8, XMM5.getValue(2));
-
-      if (IsEK256) {
-        return DAG.getNode(ISD::MERGE_VALUES, DL, Op->getVTList(),
-                           {SDValue(Res, 0),
-                            XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, Chain});
-      } else {
-        return DAG.getNode(ISD::MERGE_VALUES, DL, Op->getVTList(),
-                           {SDValue(Res, 0),
-                            XMM0, XMM1, XMM2, XMM4, XMM5, XMM6, Chain});
-      }
-    }
     case Intrinsic::x86_aesenc128kl:
     case Intrinsic::x86_aesdec128kl:
     case Intrinsic::x86_aesenc256kl:
@@ -26052,8 +26011,12 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
         break;
       }
 
-      SDValue Operation = DAG.getNode(Opcode, DL, VTs, Chain, Op.getOperand(2),
-                                      Op.getOperand(3));
+      MemIntrinsicSDNode *MemIntr = cast<MemIntrinsicSDNode>(Op);
+      MachineMemOperand *MMO = MemIntr->getMemOperand();
+      EVT MemVT = MemIntr->getMemoryVT();
+      SDValue Operation = DAG.getMemIntrinsicNode(
+          Opcode, DL, VTs, {Chain, Op.getOperand(2), Op.getOperand(3)}, MemVT,
+          MMO);
       SDValue ZF = getSETCC(X86::COND_E, Operation.getValue(1), DL, DAG);
 
       return DAG.getNode(ISD::MERGE_VALUES, DL, Op->getVTList(),
@@ -26086,11 +26049,15 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
         break;
       }
 
-      SDValue Operation = DAG.getNode(
+      MemIntrinsicSDNode *MemIntr = cast<MemIntrinsicSDNode>(Op);
+      MachineMemOperand *MMO = MemIntr->getMemOperand();
+      EVT MemVT = MemIntr->getMemoryVT();
+      SDValue Operation = DAG.getMemIntrinsicNode(
           Opcode, DL, VTs,
           {Chain, Op.getOperand(2), Op.getOperand(3), Op.getOperand(4),
            Op.getOperand(5), Op.getOperand(6), Op.getOperand(7),
-           Op.getOperand(8), Op.getOperand(9), Op.getOperand(10)});
+           Op.getOperand(8), Op.getOperand(9), Op.getOperand(10)},
+          MemVT, MMO);
       SDValue ZF = getSETCC(X86::COND_E, Operation.getValue(0), DL, DAG);
 
       return DAG.getNode(ISD::MERGE_VALUES, DL, Op->getVTList(),
@@ -30848,7 +30815,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(LCMPXCHG16_DAG)
   NODE_NAME_CASE(LCMPXCHG8_SAVE_EBX_DAG)
   NODE_NAME_CASE(LCMPXCHG16_SAVE_RBX_DAG)
-  NODE_NAME_CASE(MWAITX_DAG)
   NODE_NAME_CASE(LADD)
   NODE_NAME_CASE(LSUB)
   NODE_NAME_CASE(LOR)
