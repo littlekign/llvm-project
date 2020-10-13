@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+#include "clang/Analysis/PathDiagnostic.h"
+
 namespace clang {
 
 class AnalyzerOptions;
@@ -27,13 +29,14 @@ class CrossTranslationUnitContext;
 namespace ento {
 
 class PathDiagnosticConsumer;
-typedef std::vector<PathDiagnosticConsumer*> PathDiagnosticConsumers;
+typedef std::vector<PathDiagnosticConsumer *> PathDiagnosticConsumers;
 
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)                    \
-  void CREATEFN(AnalyzerOptions &AnalyzerOpts, PathDiagnosticConsumers &C,     \
-                const std::string &Prefix, const Preprocessor &PP,             \
+  void CREATEFN(PathDiagnosticConsumerOptions Diagopts,                        \
+                PathDiagnosticConsumers &C, const std::string &Prefix,         \
+                const Preprocessor &PP,                                        \
                 const cross_tu::CrossTranslationUnitContext &CTU);
-#include "clang/StaticAnalyzer/Core/Analyses.def"
+#include "clang/Analysis/PathDiagnosticConsumers.def"
 
 } // end 'ento' namespace
 } // end 'clang' namespace
