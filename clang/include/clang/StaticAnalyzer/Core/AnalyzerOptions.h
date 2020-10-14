@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_STATICANALYZER_CORE_ANALYZEROPTIONS_H
 #define LLVM_CLANG_STATICANALYZER_CORE_ANALYZEROPTIONS_H
 
-#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/Optional.h"
@@ -58,7 +57,7 @@ NumConstraints
 ///  analysis results.
 enum AnalysisDiagClients {
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN) PD_##NAME,
-#include "clang/Analysis/PathDiagnosticConsumers.def"
+#include "clang/StaticAnalyzer/Core/Analyses.def"
 PD_NONE,
 NUM_ANALYSIS_DIAG_CLIENTS
 };
@@ -256,7 +255,7 @@ public:
   unsigned NoRetryExhausted : 1;
 
   /// Emit analyzer warnings as errors.
-  bool AnalyzerWerror : 1;
+  unsigned AnalyzerWerror : 1;
 
   /// The inlining stack depth limit.
   // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
@@ -391,16 +390,6 @@ public:
   ///
   /// \sa CXXMemberInliningMode
   bool mayInlineCXXMemberFunction(CXXInlineableMemberKind K) const;
-
-  ento::PathDiagnosticConsumerOptions getDiagOpts() const {
-    return {FullCompilerInvocation,
-            ShouldDisplayMacroExpansions,
-            ShouldSerializeStats,
-            ShouldWriteStableReportFilename,
-            AnalyzerWerror,
-            ShouldApplyFixIts,
-            ShouldDisplayCheckerNameForText};
-  }
 };
 
 using AnalyzerOptionsRef = IntrusiveRefCntPtr<AnalyzerOptions>;

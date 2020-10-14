@@ -1,4 +1,4 @@
-//===--- SarifPathDiagnosticConsumer.cpp - Sarif Diagnostics  ---*- C++ -*-===//
+//===--- SarifDiagnostics.cpp - Sarif Diagnostics for Paths -----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,15 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the SarifPathDiagnosticConsumer object.
+//  This file defines the SarifDiagnostics object.
 //
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathDiagnostic.h"
-#include "clang/Analysis/PathDiagnosticConsumers.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
+#include "clang/StaticAnalyzer/Core/PathDiagnosticConsumers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -26,19 +27,20 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class SarifPathDiagnosticConsumer : public PathDiagnosticConsumer {
+class SarifDiagnostics : public PathDiagnosticConsumer {
   std::string OutputFile;
   const LangOptions &LO;
 
 public:
-  SarifPathDiagnosticConsumer(const std::string &Output, const LangOptions &LO)
+  SarifDiagnostics(AnalyzerOptions &, const std::string &Output,
+                   const LangOptions &LO)
       : OutputFile(Output), LO(LO) {}
-  ~SarifPathDiagnosticConsumer() override = default;
+  ~SarifDiagnostics() override = default;
 
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
                             FilesMade *FM) override;
 
-  StringRef getName() const override { return "SarifPathDiagnosticConsumer"; }
+  StringRef getName() const override { return "SarifDiagnostics"; }
   PathGenerationScheme getGenerationScheme() const override { return Minimal; }
   bool supportsLogicalOpControlFlow() const override { return true; }
   bool supportsCrossFileDiagnostics() const override { return true; }
@@ -46,7 +48,7 @@ public:
 } // end anonymous namespace
 
 void ento::createSarifDiagnosticConsumer(
-    PathDiagnosticConsumerOptions DiagOpts, PathDiagnosticConsumers &C,
+    AnalyzerOptions &AnalyzerOpts, PathDiagnosticConsumers &C,
     const std::string &Output, const Preprocessor &PP,
     const cross_tu::CrossTranslationUnitContext &CTU) {
 
@@ -54,9 +56,8 @@ void ento::createSarifDiagnosticConsumer(
   if (Output.empty())
     return;
 
-  C.push_back(new SarifPathDiagnosticConsumer(Output, PP.getLangOpts()));
-  createTextMinimalPathDiagnosticConsumer(std::move(DiagOpts), C, Output, PP,
-                                          CTU);
+  C.push_back(new SarifDiagnostics(AnalyzerOpts, Output, PP.getLangOpts()));
+  createTextMinimalPathDiagnosticConsumer(AnalyzerOpts, C, Output, PP, CTU);
 }
 
 static StringRef getFileName(const FileEntry &FE) {
@@ -300,9 +301,6 @@ static json::Object createResult(const LangOptions &LO,
 }
 
 static StringRef getRuleDescription(StringRef CheckName) {
-  // FIXME: This is a layering violation; it only works for the particular
-  // use-case of clang static analyzer. This info should be provided
-  // as part of PathDiagnostic itself.
   return llvm::StringSwitch<StringRef>(CheckName)
 #define GET_CHECKERS
 #define CHECKER(FULLNAME, CLASS, HELPTEXT, DOC_URI, IS_HIDDEN)                 \
@@ -314,9 +312,6 @@ static StringRef getRuleDescription(StringRef CheckName) {
 }
 
 static StringRef getRuleHelpURIStr(StringRef CheckName) {
-  // FIXME: This is a layering violation; it only works for the particular
-  // use-case of clang static analyzer. This info should be provided
-  // as part of PathDiagnostic itself.
   return llvm::StringSwitch<StringRef>(CheckName)
 #define GET_CHECKERS
 #define CHECKER(FULLNAME, CLASS, HELPTEXT, DOC_URI, IS_HIDDEN)                 \
@@ -384,7 +379,7 @@ static json::Object createRun(const LangOptions &LO,
                       {"columnKind", "unicodeCodePoints"}};
 }
 
-void SarifPathDiagnosticConsumer::FlushDiagnosticsImpl(
+void SarifDiagnostics::FlushDiagnosticsImpl(
     std::vector<const PathDiagnostic *> &Diags, FilesMade *) {
   // We currently overwrite the file if it already exists. However, it may be
   // useful to add a feature someday that allows the user to append a run to an
