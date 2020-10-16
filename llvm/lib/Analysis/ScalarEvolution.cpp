@@ -5715,6 +5715,9 @@ ConstantRange ScalarEvolution::getRangeForAffineNoSelfWrappingAR(
       IsSigned ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE;
   const SCEV *Start = AddRec->getStart();
   const SCEV *End = AddRec->evaluateAtIteration(MaxBECount, *this);
+  // We could handle non-constant End, but it harms compile time a lot.
+  if (!isa<SCEVConstant>(End))
+    return ConstantRange::getFull(BitWidth);
 
   // We know that there is no self-wrap. Let's take Start and End values and
   // look at all intermediate values V1, V2, ..., Vn that IndVar takes during
@@ -5738,19 +5741,13 @@ ConstantRange ScalarEvolution::getRangeForAffineNoSelfWrappingAR(
   if (RangeBetween.isFullSet())
     return RangeBetween;
 
-  // TODO: Too big expressions here may lead to exponential explosions on
-  // recursion. So we limit the size of operands to avoid this. Maybe in the
-  // future we should find a better way to deal with it.
-  const unsigned Threshold = 3;
-  if (Start->getExpressionSize() > Threshold ||
-      Step->getExpressionSize() > Threshold)
-    return ConstantRange::getFull(BitWidth);
-  if (isKnownPositive(Step) && isKnownPredicate(LEPred, Start, End))
+  if (isKnownPositive(Step) &&
+      isKnownViaNonRecursiveReasoning(LEPred, Start, End))
     return RangeBetween;
-  else if (isKnownNegative(Step) && isKnownPredicate(GEPred, Start, End))
+  else if (isKnownNegative(Step) &&
+           isKnownViaNonRecursiveReasoning(GEPred, Start, End))
     return RangeBetween;
-  else
-    return ConstantRange::getFull(BitWidth);
+  return ConstantRange::getFull(BitWidth);
 }
 
 ConstantRange ScalarEvolution::getRangeViaFactoring(const SCEV *Start,
@@ -9765,7 +9762,17 @@ bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred, const SCEV *LHS,
       FoundRHS = getZeroExtendExpr(FoundRHS, LHS->getType());
     }
   }
+  return isImpliedCondBalancedTypes(Pred, LHS, RHS, FoundPred, FoundLHS,
+                                    FoundRHS, Context);
+}
 
+bool ScalarEvolution::isImpliedCondBalancedTypes(
+    ICmpInst::Predicate Pred, const SCEV *LHS, const SCEV *RHS,
+    ICmpInst::Predicate FoundPred, const SCEV *FoundLHS, const SCEV *FoundRHS,
+    const Instruction *Context) {
+  assert(getTypeSizeInBits(LHS->getType()) ==
+             getTypeSizeInBits(FoundLHS->getType()) &&
+         "Types should be balanced!");
   // Canonicalize the query to match the way instcombine will have
   // canonicalized the comparison.
   if (SimplifyICmpOperands(Pred, LHS, RHS))
