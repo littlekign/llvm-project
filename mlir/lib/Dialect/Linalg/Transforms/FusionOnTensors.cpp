@@ -20,6 +20,7 @@
 #include "mlir/IR/AffineMap.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Support/LLVM.h"
+#include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 using namespace mlir;
 using namespace mlir::linalg;
@@ -912,7 +913,7 @@ struct FusionOfTensorOpsPass
     OwningRewritePatternList patterns;
     Operation *op = getOperation();
     populateLinalgTensorOpsFusionPatterns(op->getContext(), patterns);
-    applyPatternsAndFoldGreedily(op->getRegions(), patterns);
+    applyPatternsAndFoldGreedily(op->getRegions(), std::move(patterns));
   }
 };
 
@@ -925,7 +926,7 @@ struct FoldReshapeOpsByLinearizationPass
     OwningRewritePatternList patterns;
     Operation *op = getOperation();
     populateFoldReshapeOpsByLinearizationPatterns(op->getContext(), patterns);
-    applyPatternsAndFoldGreedily(op->getRegions(), patterns);
+    applyPatternsAndFoldGreedily(op->getRegions(), std::move(patterns));
   }
 };
 
